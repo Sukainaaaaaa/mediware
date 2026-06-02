@@ -9,10 +9,13 @@ type MedicationWizardProps = {
   strength: string;
   strengthUnit: string;
   medicationFrequency: string;
+  dailySchedule: string;
+  dailyScheduleDetail: string;
   timesPerDay: string;
   selectedWeekDays: string[];
   weeklyDay: string;
   nextDoseDate: string;
+  fewMonthsInterval: string;
   asNeededNote: string;
   otherSchedule: string;
   indication: string;
@@ -26,9 +29,12 @@ type MedicationWizardProps = {
   setStrength: (value: string) => void;
   setStrengthUnit: (value: string) => void;
   setMedicationFrequency: (value: string) => void;
+  setDailySchedule: (value: string) => void;
+  setDailyScheduleDetail: (value: string) => void;
   setTimesPerDay: (value: string) => void;
   setWeeklyDay: (value: string) => void;
   setNextDoseDate: (value: string) => void;
+  setFewMonthsInterval: (value: string) => void;
   setAsNeededNote: (value: string) => void;
   setOtherSchedule: (value: string) => void;
   setIndication: (value: string) => void;
@@ -115,8 +121,19 @@ const frequencies = [
   "Once a week",
   "Every 2 weeks",
   "Once a month",
+  "Every few months",
   "Only when needed",
   "Other schedule",
+];
+
+const dailyTimesPerDayOption = "Times per day";
+const dailyEveryHoursOption = "Every number of hours";
+
+const fewMonthsOptions = [
+  "Every 2 months",
+  "Every 3 months",
+  "Every 6 months",
+  "Once a year",
 ];
 
 const calendarWeekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -166,10 +183,13 @@ function MedicationWizard({
   strength,
   strengthUnit,
   medicationFrequency,
+  dailySchedule,
+  dailyScheduleDetail,
   timesPerDay,
   selectedWeekDays,
   weeklyDay,
   nextDoseDate,
+  fewMonthsInterval,
   asNeededNote,
   otherSchedule,
   indication,
@@ -183,9 +203,12 @@ function MedicationWizard({
   setStrength,
   setStrengthUnit,
   setMedicationFrequency,
+  setDailySchedule,
+  setDailyScheduleDetail,
   setTimesPerDay,
   setWeeklyDay,
   setNextDoseDate,
+  setFewMonthsInterval,
   setAsNeededNote,
   setOtherSchedule,
   setIndication,
@@ -438,25 +461,132 @@ function MedicationWizard({
 
             <div style={panelStyle}>
               <p style={{ marginTop: 0, marginBottom: "16px", fontSize: "24px", fontWeight: "bold" }}>
-                {medicationFrequency === "Every day" && "How many times per day?"}
+                {medicationFrequency === "Every day" && "How often per day?"}
                 {medicationFrequency === "A few days a week" && "Which days do you take it?"}
                 {medicationFrequency === "Once a week" && "Which day do you take it?"}
                 {medicationFrequency === "Every 2 weeks" && "When is your next dose?"}
                 {medicationFrequency === "Once a month" && "When is your next dose?"}
+                {medicationFrequency === "Every few months" && "How often, and when is your next dose?"}
                 {medicationFrequency === "Only when needed" && "When do you usually take it?"}
                 {medicationFrequency === "Other schedule" && "Describe your schedule"}
                 {!medicationFrequency && "Tell us more about your schedule"}
               </p>
 
               {medicationFrequency === "Every day" && (
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={timesPerDay}
-                  onChange={(e) => setTimesPerDay(e.target.value)}
-                  placeholder="2"
-                  style={inputStyle}
-                />
+                <div style={{ display: "grid", gap: "12px", marginBottom: "24px" }}>
+                  <label
+                    className="wizard-option-button"
+                    htmlFor="daily-dose-count"
+                    onClick={() => {
+                      setDailySchedule(dailyTimesPerDayOption);
+                      setDailyScheduleDetail("");
+                    }}
+                    style={{
+                      minHeight: "58px",
+                      padding: "14px",
+                      borderRadius: "8px",
+                      border: "2px solid white",
+                      backgroundColor:
+                        dailySchedule === dailyTimesPerDayOption ? "white" : "#1a5334",
+                      color:
+                        dailySchedule === dailyTimesPerDayOption ? "#1a5334" : "white",
+                      fontSize: "16px",
+                      fontWeight:
+                        dailySchedule === dailyTimesPerDayOption ? "bold" : "normal",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <input
+                      id="daily-dose-count"
+                      type="text"
+                      inputMode="numeric"
+                      value={timesPerDay}
+                      onFocus={() => {
+                        setDailySchedule(dailyTimesPerDayOption);
+                        setDailyScheduleDetail("");
+                      }}
+                      onChange={(e) => {
+                        setDailySchedule(dailyTimesPerDayOption);
+                        setDailyScheduleDetail("");
+                        setTimesPerDay(e.target.value);
+                      }}
+                      placeholder=""
+                      style={{
+                        width: "58px",
+                        padding: "8px",
+                        borderRadius: "6px",
+                        border: "2px solid currentColor",
+                        backgroundColor: "transparent",
+                        color: "inherit",
+                        fontSize: "16px",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <span>times per day</span>
+                  </label>
+
+                  <label
+                    className="wizard-option-button"
+                    htmlFor="hours-between-doses"
+                    onClick={() => {
+                      setDailySchedule(dailyEveryHoursOption);
+                      setTimesPerDay("");
+                    }}
+                    style={{
+                      minHeight: "58px",
+                      padding: "14px",
+                      borderRadius: "8px",
+                      border: "2px solid white",
+                      backgroundColor:
+                        dailySchedule === dailyEveryHoursOption ? "white" : "#1a5334",
+                      color:
+                        dailySchedule === dailyEveryHoursOption ? "#1a5334" : "white",
+                      fontSize: "16px",
+                      fontWeight:
+                        dailySchedule === dailyEveryHoursOption ? "bold" : "normal",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                    }}
+                  >
+                    <span>Every</span>
+                    <input
+                      id="hours-between-doses"
+                      type="text"
+                      inputMode="numeric"
+                      value={dailyScheduleDetail}
+                      onFocus={() => {
+                        setDailySchedule(dailyEveryHoursOption);
+                        setTimesPerDay("");
+                      }}
+                      onChange={(e) => {
+                        setDailySchedule(dailyEveryHoursOption);
+                        setTimesPerDay("");
+                        setDailyScheduleDetail(e.target.value);
+                      }}
+                      placeholder=""
+                      style={{
+                        width: "58px",
+                        padding: "8px",
+                        borderRadius: "6px",
+                        border: "2px solid currentColor",
+                        backgroundColor: "transparent",
+                        color: "inherit",
+                        fontSize: "16px",
+                        fontWeight: "bold",
+                        textAlign: "center",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                    <span>hours</span>
+                  </label>
+                </div>
               )}
 
               {medicationFrequency === "A few days a week" && (
@@ -507,8 +637,41 @@ function MedicationWizard({
                 </div>
               )}
 
-              {(medicationFrequency === "Every 2 weeks" || medicationFrequency === "Once a month") && (
+              {medicationFrequency === "Every few months" && (
+                <div style={{ display: "grid", gap: "12px", marginBottom: "24px" }}>
+                  {fewMonthsOptions.map((option) => (
+                    <button
+                      key={option}
+                      className="wizard-option-button"
+                      onClick={() => setFewMonthsInterval(option)}
+                      style={{
+                        width: "100%",
+                        padding: "14px",
+                        borderRadius: "8px",
+                        border: "2px solid white",
+                        backgroundColor: fewMonthsInterval === option ? "white" : "#1a5334",
+                        color: fewMonthsInterval === option ? "#1a5334" : "white",
+                        fontSize: "16px",
+                        fontWeight: fewMonthsInterval === option ? "bold" : "normal",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {(medicationFrequency === "Every 2 weeks" ||
+                medicationFrequency === "Once a month" ||
+                medicationFrequency === "Every few months") && (
                 <div style={{ marginBottom: "24px" }}>
+                  {medicationFrequency === "Every few months" && (
+                    <p style={{ marginTop: 0, marginBottom: "10px", fontWeight: "bold" }}>
+                      When is your next dose?
+                    </p>
+                  )}
                   <button
                     className="wizard-option-button"
                     onClick={() => {

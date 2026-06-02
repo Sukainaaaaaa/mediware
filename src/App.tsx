@@ -2,12 +2,13 @@ import { useState } from "react";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
 import EmptyPage from "./components/EmptyPage";
+import AdherencePage from "./components/AdherencePage";
 import MedicationsPage from "./components/MedicationsPage";
 import MedicationDetailsOverlay from "./components/MedicationDetailsOverlay";
 import TrackerPage from "./components/TrackerPage";
 import MedicationWizard from "./components/MedicationWizard";
 import type { Medication, Page } from "./types";
-import { getScheduledDosesForDate, } from "./utils/medicationSchedule";
+import { getScheduledDosesWithStatusForDate } from "./utils/medicationSchedule";
 
 function App() {
 
@@ -22,6 +23,14 @@ function App() {
       date1.getMonth() === date2.getMonth() &&
       date1.getDate() === date2.getDate()
     );
+  };
+
+  const getDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
   };
 
   const getDateLabel = (date: Date) => {
@@ -83,10 +92,13 @@ function App() {
   const [strength, setStrength] = useState("");
   const [strengthUnit, setStrengthUnit] = useState("mg");
   const [medicationFrequency, setMedicationFrequency] = useState("");
+  const [dailySchedule, setDailySchedule] = useState("");
+  const [dailyScheduleDetail, setDailyScheduleDetail] = useState("");
   const [timesPerDay, setTimesPerDay] = useState("");
   const [selectedWeekDays, setSelectedWeekDays] = useState<string[]>([]);
   const [weeklyDay, setWeeklyDay] = useState("");
   const [nextDoseDate, setNextDoseDate] = useState("");
+  const [fewMonthsInterval, setFewMonthsInterval] = useState("");
   const [asNeededNote, setAsNeededNote] = useState("");
   const [otherSchedule, setOtherSchedule] = useState("");
   const [indication, setIndication] = useState("");
@@ -111,10 +123,13 @@ function App() {
     setStrength("");
     setStrengthUnit("mg");
     setMedicationFrequency("");
+    setDailySchedule("");
+    setDailyScheduleDetail("");
     setTimesPerDay("");
     setSelectedWeekDays([]);
     setWeeklyDay("");
     setNextDoseDate("");
+    setFewMonthsInterval("");
     setAsNeededNote("");
     setOtherSchedule("");
     setIndication("");
@@ -126,10 +141,13 @@ function App() {
     setStrength(medication.strength);
     setStrengthUnit(medication.strengthUnit);
     setMedicationFrequency(medication.medicationFrequency);
+    setDailySchedule(medication.dailySchedule);
+    setDailyScheduleDetail(medication.dailyScheduleDetail);
     setTimesPerDay(medication.timesPerDay);
     setSelectedWeekDays(medication.selectedWeekDays);
     setWeeklyDay(medication.weeklyDay);
     setNextDoseDate(medication.nextDoseDate);
+    setFewMonthsInterval(medication.fewMonthsInterval);
     setAsNeededNote(medication.asNeededNote);
     setOtherSchedule(medication.otherSchedule);
     setIndication(medication.indication);
@@ -137,7 +155,15 @@ function App() {
 
   const getScheduleSummary = () => {
     if (medicationFrequency === "Every day") {
-      return timesPerDay ? `Every day, ${timesPerDay} time(s) per day` : "Every day";
+      if (dailySchedule === "Times per day") {
+        return timesPerDay ? `Every day, ${timesPerDay} dose(s) per day` : "Every day";
+      }
+
+      if (dailySchedule === "Every number of hours") {
+        return dailyScheduleDetail ? `Every ${dailyScheduleDetail} hours` : "A dose every few hours";
+      }
+
+      return dailySchedule ? `Every day, ${dailySchedule}` : "Every day";
     }
 
     if (medicationFrequency === "A few days a week") {
@@ -158,6 +184,14 @@ function App() {
       return nextDoseDate ? `Once a month, next dose ${nextDoseDate}` : "Once a month";
     }
 
+    if (medicationFrequency === "Every few months") {
+      if (fewMonthsInterval && nextDoseDate) {
+        return `${fewMonthsInterval}, next dose ${nextDoseDate}`;
+      }
+
+      return fewMonthsInterval || "Every few months";
+    }
+
     if (medicationFrequency === "Only when needed") {
       return asNeededNote ? `Only when needed: ${asNeededNote}` : "Only when needed";
     }
@@ -171,17 +205,24 @@ function App() {
 
   const handleSaveMedication = () => {
     const medicationId = editingMedicationId ?? Date.now();
+    const existingMedication = medications.find(
+      (medication) => medication.id === editingMedicationId
+    );
     const medicationToSave: Medication = {
       id: medicationId,
+      startDate: existingMedication?.startDate ?? getDateInputValue(new Date()),
       medicationName,
       medicationForm,
       strength,
       strengthUnit,
       medicationFrequency,
+      dailySchedule,
+      dailyScheduleDetail,
       timesPerDay,
       selectedWeekDays,
       weeklyDay,
       nextDoseDate,
+      fewMonthsInterval,
       asNeededNote,
       otherSchedule,
       indication,
@@ -211,16 +252,10 @@ function App() {
     resetAddMedicationForm();
   };
 
-  const scheduledDoses = getScheduledDosesForDate(selectedDate, medications);
-
-  const dosesToTake = scheduledDoses.filter(
-    (dose) =>
-      !takenDoseIds.includes(dose.id) &&
-      !completingDoseIds.includes(dose.id)
-  );
-
-  const dosesTaken = scheduledDoses.filter((dose) =>
-    takenDoseIds.includes(dose.id)
+  const scheduledDoses = getScheduledDosesWithStatusForDate(
+    selectedDate,
+    medications,
+    takenDoseIds
   );
 
   const markDoseAsTaken = (doseId: string) => {
@@ -348,8 +383,7 @@ function App() {
       {activePage === "tracker" && (
         <TrackerPage
           dateLabel={getDateLabel(selectedDate)}
-          dosesToTake={dosesToTake}
-          dosesTaken={dosesTaken}
+          scheduledDoses={scheduledDoses}
           completingDoseIds={completingDoseIds}
           onPreviousDay={goToPreviousDay}
           onNextDay={goToNextDay}
@@ -358,7 +392,12 @@ function App() {
         />
       )}
 
-      {activePage === "adherence" && <EmptyPage title="Adherence" />}
+      {activePage === "adherence" && (
+        <AdherencePage
+          medications={medications}
+          takenDoseIds={takenDoseIds}
+        />
+      )}
       {activePage === "sideEffects" && <EmptyPage title="Side effects" />}
 
       {activePage === "medications" && (
@@ -399,10 +438,13 @@ function App() {
         strength={strength}
         strengthUnit={strengthUnit}
         medicationFrequency={medicationFrequency}
+        dailySchedule={dailySchedule}
+        dailyScheduleDetail={dailyScheduleDetail}
         timesPerDay={timesPerDay}
         selectedWeekDays={selectedWeekDays}
         weeklyDay={weeklyDay}
         nextDoseDate={nextDoseDate}
+        fewMonthsInterval={fewMonthsInterval}
         asNeededNote={asNeededNote}
         otherSchedule={otherSchedule}
         indication={indication}
@@ -419,9 +461,12 @@ function App() {
         setStrength={setStrength}
         setStrengthUnit={setStrengthUnit}
         setMedicationFrequency={setMedicationFrequency}
+        setDailySchedule={setDailySchedule}
+        setDailyScheduleDetail={setDailyScheduleDetail}
         setTimesPerDay={setTimesPerDay}
         setWeeklyDay={setWeeklyDay}
         setNextDoseDate={setNextDoseDate}
+        setFewMonthsInterval={setFewMonthsInterval}
         setAsNeededNote={setAsNeededNote}
         setOtherSchedule={setOtherSchedule}
         setIndication={setIndication}

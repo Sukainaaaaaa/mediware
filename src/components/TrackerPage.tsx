@@ -17,6 +17,7 @@ type MedicationDoseGroup = {
   strengthLabel: string;
   doses: ScheduledDoseWithStatus[];
   pendingCount: number;
+  missedCount: number;
   takenCount: number;
   totalCount: number;
 };
@@ -24,9 +25,7 @@ type MedicationDoseGroup = {
 const groupDosesByMedication = (doses: ScheduledDoseWithStatus[]) => {
   const groups = new Map<number, MedicationDoseGroup>();
 
-  doses
-    .filter((dose) => dose.status !== "missed")
-    .forEach((dose) => {
+  doses.forEach((dose) => {
       const medication = dose.medication;
       const strengthLabel = medication.strength
         ? `${medication.strength} ${medication.strengthUnit}`
@@ -40,6 +39,7 @@ const groupDosesByMedication = (doses: ScheduledDoseWithStatus[]) => {
           strengthLabel,
           doses: [dose],
           pendingCount: dose.status === "pending" ? 1 : 0,
+          missedCount: dose.status === "missed" ? 1 : 0,
           takenCount: dose.status === "taken" ? 1 : 0,
           totalCount: 1,
         });
@@ -49,6 +49,7 @@ const groupDosesByMedication = (doses: ScheduledDoseWithStatus[]) => {
 
       existingGroup.doses.push(dose);
       existingGroup.pendingCount += dose.status === "pending" ? 1 : 0;
+      existingGroup.missedCount += dose.status === "missed" ? 1 : 0;
       existingGroup.takenCount += dose.status === "taken" ? 1 : 0;
       existingGroup.totalCount += 1;
     });
@@ -148,7 +149,9 @@ function TrackerPage({
     null
   );
   const doseGroups = groupDosesByMedication(scheduledDoses);
-  const groupsToTake = doseGroups.filter((group) => group.pendingCount > 0);
+  const groupsToTake = doseGroups.filter(
+    (group) => group.pendingCount > 0 || group.missedCount > 0
+  );
   const groupsTaken = doseGroups.filter(
     (group) => group.totalCount > 0 && group.takenCount === group.totalCount
   );
@@ -276,7 +279,7 @@ function TrackerPage({
                 {group.medicationName}
               </p>
               <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
-                {group.takenCount}/{group.totalCount} doses taken today
+                {group.takenCount}/{group.totalCount} doses taken
               </p>
               {group.strengthLabel && (
                 <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
@@ -347,7 +350,7 @@ function TrackerPage({
                       {group.medicationName}
                     </p>
                     <p style={{ margin: "4px 0 0", fontSize: "14px" }}>
-                      {group.takenCount}/{group.totalCount} doses taken today
+                      {group.takenCount}/{group.totalCount} doses taken
                     </p>
                   </div>
 
@@ -420,7 +423,7 @@ function TrackerPage({
                   {selectedGroup.medicationName}
                 </h3>
                 <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
-                  {selectedGroup.takenCount}/{selectedGroup.totalCount} doses taken today
+                  {selectedGroup.takenCount}/{selectedGroup.totalCount} doses taken
                 </p>
               </div>
 

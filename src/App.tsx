@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
 import EmptyPage from "./components/EmptyPage";
@@ -9,6 +9,12 @@ import TrackerPage from "./components/TrackerPage";
 import MedicationWizard from "./components/MedicationWizard";
 import type { Medication, Page } from "./types";
 import { getScheduledDosesWithStatusForDate } from "./utils/medicationSchedule";
+import {
+  loadMedications,
+  loadTakenDoseIds,
+  saveMedications,
+  saveTakenDoseIds,
+} from "./utils/localStorage";
 
 function App() {
 
@@ -102,8 +108,8 @@ function App() {
   const [asNeededNote, setAsNeededNote] = useState("");
   const [otherSchedule, setOtherSchedule] = useState("");
   const [indication, setIndication] = useState("");
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [takenDoseIds, setTakenDoseIds] = useState<string[]>([]);
+  const [medications, setMedications] = useState<Medication[]>(loadMedications);
+  const [takenDoseIds, setTakenDoseIds] = useState<string[]>(loadTakenDoseIds);
   const [completingDoseIds, setCompletingDoseIds] = useState<string[]>([]);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
   const [isConfirmingDeleteMedication, setIsConfirmingDeleteMedication] = useState(false);
@@ -114,6 +120,14 @@ function App() {
   const selectedMedication = medications.find(
     (medication) => medication.id === selectedMedicationId
   );
+
+  useEffect(() => {
+    saveMedications(medications);
+  }, [medications]);
+
+  useEffect(() => {
+    saveTakenDoseIds(takenDoseIds);
+  }, [takenDoseIds]);
 
   const resetAddMedicationForm = () => {
     setAddMedicationStep(0);

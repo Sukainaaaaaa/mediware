@@ -42,10 +42,20 @@ type MedicationWizardProps = {
 };
 
 const panelStyle = {
-  width: "12.5%",
+  width: "14.285714%",
   flexShrink: 0,
-  paddingLeft: "12px",
+  minHeight: "calc(100vh - 150px)",
+  padding: "0 12px",
   boxSizing: "border-box",
+  display: "flex",
+  flexDirection: "column",
+} as const;
+
+const questionStyle = {
+  marginTop: "clamp(58px, 11vh, 100px)",
+  marginBottom: "clamp(32px, 6vh, 56px)",
+  fontSize: "24px",
+  fontWeight: "bold",
 } as const;
 
 const inputStyle = {
@@ -62,20 +72,21 @@ const inputStyle = {
 } as const;
 
 const darkButtonStyle = {
-  flex: 1,
-  padding: "14px",
-  borderRadius: "8px",
+  minWidth: "118px",
+  padding: "13px 22px",
+  borderRadius: "999px",
   border: "2px solid white",
   backgroundColor: "#1a5334",
   color: "white",
   fontSize: "16px",
+  fontWeight: "bold",
   cursor: "pointer",
 } as const;
 
 const lightButtonStyle = {
-  flex: 1,
-  padding: "14px",
-  borderRadius: "8px",
+  minWidth: "118px",
+  padding: "13px 22px",
+  borderRadius: "999px",
   border: "2px solid white",
   backgroundColor: "white",
   color: "#1a5334",
@@ -83,6 +94,22 @@ const lightButtonStyle = {
   fontWeight: "bold",
   cursor: "pointer",
 } as const;
+
+const navigationStyle = {
+  display: "flex",
+  justifyContent: "center",
+  gap: "16px",
+  marginTop: "32px",
+} as const;
+
+const getButtonStateStyle = (
+  style: typeof darkButtonStyle | typeof lightButtonStyle,
+  isEnabled: boolean
+) => ({
+  ...style,
+  opacity: isEnabled ? 1 : 0.45,
+  cursor: isEnabled ? "pointer" : "not-allowed",
+});
 
 const medicationForms = [
   "Tablet",
@@ -249,6 +276,79 @@ function MedicationWizard({
     setIsDatePickerOpen(false);
   };
 
+  const isStepComplete = (stepToCheck: number) => {
+    if (stepToCheck === 0) {
+      return medicationName.trim().length > 0;
+    }
+
+    if (stepToCheck === 1) {
+      return medicationForm.trim().length > 0;
+    }
+
+    if (stepToCheck === 2) {
+      return strength.trim().length > 0;
+    }
+
+    if (stepToCheck === 3) {
+      return medicationFrequency.trim().length > 0;
+    }
+
+    if (stepToCheck === 4) {
+      if (medicationFrequency === "Every day") {
+        if (dailySchedule === dailyTimesPerDayOption) {
+          return timesPerDay.trim().length > 0;
+        }
+
+        if (dailySchedule === dailyEveryHoursOption) {
+          return dailyScheduleDetail.trim().length > 0;
+        }
+
+        return false;
+      }
+
+      if (medicationFrequency === "A few days a week") {
+        return selectedWeekDays.length > 0;
+      }
+
+      if (medicationFrequency === "Once a week") {
+        return weeklyDay.trim().length > 0;
+      }
+
+      if (
+        medicationFrequency === "Every 2 weeks" ||
+        medicationFrequency === "Once a month"
+      ) {
+        return nextDoseDate.trim().length > 0;
+      }
+
+      if (medicationFrequency === "Every few months") {
+        return (
+          fewMonthsInterval.trim().length > 0 &&
+          nextDoseDate.trim().length > 0
+        );
+      }
+
+      if (medicationFrequency === "Only when needed") {
+        return true;
+      }
+
+      if (medicationFrequency === "Other schedule") {
+        return otherSchedule.trim().length > 0;
+      }
+
+      return false;
+    }
+
+    return true;
+  };
+
+  const canSaveMedication =
+    isStepComplete(0) &&
+    isStepComplete(1) &&
+    isStepComplete(2) &&
+    isStepComplete(3) &&
+    isStepComplete(4);
+
   return (
     <div
       style={{
@@ -301,60 +401,35 @@ function MedicationWizard({
           <div
             style={{
               display: "flex",
-              width: "800%",
-              transform: `translateX(-${step * 12.5}%)`,
+              width: "700%",
+              transform: `translateX(-${step * 14.285714}%)`,
               transition: "transform 0.3s ease",
             }}
           >
-            <div
-              style={{
-                width: "12.5%",
-                flexShrink: 0,
-                paddingRight: "12px",
-                boxSizing: "border-box",
-              }}
-            >
-              <button
-                className="start-medication-button"
-                onClick={() => setStep(1)}
-                style={{
-                  width: "100%",
-                  minHeight: "96px",
-                  padding: "18px",
-                  borderRadius: "8px",
-                  border: "2px solid white",
-                  backgroundColor: "#1a5334",
-                  color: "white",
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  textAlign: "center",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                START
-              </button>
-            </div>
-
             <div style={panelStyle}>
-              <label htmlFor="medication-name" style={{ display: "block", marginBottom: "16px", fontSize: "24px", fontWeight: "bold" }}>
+              <label htmlFor="medication-name" style={{ ...questionStyle, display: "block" }}>
                 What is the name of your medication?
               </label>
               <input
                 id="medication-name"
                 value={medicationName}
                 onChange={(e) => setMedicationName(e.target.value)}
-                placeholder="Metformin"
+                placeholder=""
                 style={inputStyle}
               />
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button onClick={() => setStep(0)} style={darkButtonStyle}>Back</button>
-                <button onClick={() => setStep(2)} style={lightButtonStyle}>Next</button>
+              <div style={navigationStyle}>
+                <button
+                  disabled={!isStepComplete(0)}
+                  onClick={() => setStep(1)}
+                  style={getButtonStateStyle(lightButtonStyle, isStepComplete(0))}
+                >
+                  Next
+                </button>
               </div>
             </div>
 
             <div style={panelStyle}>
-              <label htmlFor="medication-form" style={{ display: "block", marginBottom: "16px", fontSize: "24px", fontWeight: "bold" }}>
+              <label htmlFor="medication-form" style={{ ...questionStyle, display: "block" }}>
                 What form is your medication?
               </label>
               <div
@@ -381,7 +456,7 @@ function MedicationWizard({
                         backgroundColor: isSelected ? "white" : "#1a5334",
                         color: isSelected ? "#1a5334" : "white",
                         fontSize: "15px",
-                        fontWeight: isSelected ? "bold" : "normal",
+                        fontWeight: isSelected ? "bold" : 600,
                         cursor: "pointer",
                       }}
                     >
@@ -390,14 +465,20 @@ function MedicationWizard({
                   );
                 })}
               </div>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button onClick={() => setStep(1)} style={darkButtonStyle}>Back</button>
-                <button onClick={() => setStep(3)} style={lightButtonStyle}>Next</button>
+              <div style={navigationStyle}>
+                <button onClick={() => setStep(0)} style={darkButtonStyle}>Back</button>
+                <button
+                  disabled={!isStepComplete(1)}
+                  onClick={() => setStep(2)}
+                  style={getButtonStateStyle(lightButtonStyle, isStepComplete(1))}
+                >
+                  Next
+                </button>
               </div>
             </div>
 
             <div style={panelStyle}>
-              <label htmlFor="medication-strength" style={{ display: "block", marginBottom: "16px", fontSize: "24px", fontWeight: "bold" }}>
+              <label htmlFor="medication-strength" style={{ ...questionStyle, display: "block" }}>
                 What is your medication strength or dosage?
               </label>
               <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
@@ -407,7 +488,7 @@ function MedicationWizard({
                   inputMode="decimal"
                   value={strength}
                   onChange={(e) => setStrength(e.target.value)}
-                  placeholder="2.5"
+                  placeholder=""
                   style={{ ...inputStyle, flex: 1, minWidth: 0, marginBottom: 0 }}
                 />
                 <select
@@ -420,17 +501,29 @@ function MedicationWizard({
                   ))}
                 </select>
               </div>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button onClick={() => setStep(2)} style={darkButtonStyle}>Back</button>
-                <button onClick={() => setStep(4)} style={lightButtonStyle}>Next</button>
+              <div style={navigationStyle}>
+                <button onClick={() => setStep(1)} style={darkButtonStyle}>Back</button>
+                <button
+                  disabled={!isStepComplete(2)}
+                  onClick={() => setStep(3)}
+                  style={getButtonStateStyle(lightButtonStyle, isStepComplete(2))}
+                >
+                  Next
+                </button>
               </div>
             </div>
 
             <div style={panelStyle}>
-              <p style={{ marginTop: 0, marginBottom: "16px", fontSize: "24px", fontWeight: "bold" }}>
+              <p
+                style={{
+                  ...questionStyle,
+                  marginTop: "clamp(36px, 7vh, 60px)",
+                  marginBottom: "clamp(20px, 4vh, 34px)",
+                }}
+              >
                 How often do you take your medication?
               </p>
-              <div style={{ display: "grid", gap: "12px", marginBottom: "24px" }}>
+              <div style={{ display: "grid", gap: "8px", marginBottom: "18px" }}>
                 {frequencies.map((frequency) => (
                   <button
                     key={frequency}
@@ -438,13 +531,13 @@ function MedicationWizard({
                     onClick={() => setMedicationFrequency(frequency)}
                     style={{
                       width: "100%",
-                      padding: "14px",
+                      padding: "11px 14px",
                       borderRadius: "8px",
                       border: "2px solid white",
                       backgroundColor: medicationFrequency === frequency ? "white" : "#1a5334",
                       color: medicationFrequency === frequency ? "#1a5334" : "white",
                       fontSize: "16px",
-                      fontWeight: medicationFrequency === frequency ? "bold" : "normal",
+                      fontWeight: medicationFrequency === frequency ? "bold" : 600,
                       cursor: "pointer",
                       textAlign: "left",
                     }}
@@ -453,14 +546,20 @@ function MedicationWizard({
                   </button>
                 ))}
               </div>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button onClick={() => setStep(3)} style={darkButtonStyle}>Back</button>
-                <button onClick={() => setStep(5)} style={lightButtonStyle}>Next</button>
+              <div style={navigationStyle}>
+                <button onClick={() => setStep(2)} style={darkButtonStyle}>Back</button>
+                <button
+                  disabled={!isStepComplete(3)}
+                  onClick={() => setStep(4)}
+                  style={getButtonStateStyle(lightButtonStyle, isStepComplete(3))}
+                >
+                  Next
+                </button>
               </div>
             </div>
 
             <div style={panelStyle}>
-              <p style={{ marginTop: 0, marginBottom: "16px", fontSize: "24px", fontWeight: "bold" }}>
+              <p style={questionStyle}>
                 {medicationFrequency === "Every day" && "How often per day?"}
                 {medicationFrequency === "A few days a week" && "Which days do you take it?"}
                 {medicationFrequency === "Once a week" && "Which day do you take it?"}
@@ -492,7 +591,7 @@ function MedicationWizard({
                         dailySchedule === dailyTimesPerDayOption ? "#1a5334" : "white",
                       fontSize: "16px",
                       fontWeight:
-                        dailySchedule === dailyTimesPerDayOption ? "bold" : "normal",
+                        dailySchedule === dailyTimesPerDayOption ? "bold" : 600,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -548,7 +647,7 @@ function MedicationWizard({
                         dailySchedule === dailyEveryHoursOption ? "#1a5334" : "white",
                       fontSize: "16px",
                       fontWeight:
-                        dailySchedule === dailyEveryHoursOption ? "bold" : "normal",
+                        dailySchedule === dailyEveryHoursOption ? "bold" : 600,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -603,7 +702,7 @@ function MedicationWizard({
                         backgroundColor: selectedWeekDays.includes(day) ? "white" : "#1a5334",
                         color: selectedWeekDays.includes(day) ? "#1a5334" : "white",
                         fontSize: "16px",
-                        fontWeight: selectedWeekDays.includes(day) ? "bold" : "normal",
+                        fontWeight: selectedWeekDays.includes(day) ? "bold" : 600,
                         cursor: "pointer",
                       }}
                     >
@@ -627,7 +726,7 @@ function MedicationWizard({
                         backgroundColor: weeklyDay === day ? "white" : "#1a5334",
                         color: weeklyDay === day ? "#1a5334" : "white",
                         fontSize: "16px",
-                        fontWeight: weeklyDay === day ? "bold" : "normal",
+                        fontWeight: weeklyDay === day ? "bold" : 600,
                         cursor: "pointer",
                       }}
                     >
@@ -652,7 +751,7 @@ function MedicationWizard({
                         backgroundColor: fewMonthsInterval === option ? "white" : "#1a5334",
                         color: fewMonthsInterval === option ? "#1a5334" : "white",
                         fontSize: "16px",
-                        fontWeight: fewMonthsInterval === option ? "bold" : "normal",
+                        fontWeight: fewMonthsInterval === option ? "bold" : 600,
                         cursor: "pointer",
                         textAlign: "left",
                       }}
@@ -821,7 +920,7 @@ function MedicationWizard({
                                 backgroundColor: isSelected ? "white" : "#1a5334",
                                 color: isSelected ? "#1a5334" : "white",
                                 cursor: "pointer",
-                                fontWeight: isSelected ? "bold" : "normal",
+                                fontWeight: isSelected ? "bold" : 600,
                               }}
                             >
                               {day}
@@ -842,33 +941,40 @@ function MedicationWizard({
                 <textarea value={otherSchedule} onChange={(e) => setOtherSchedule(e.target.value)} placeholder="Every other day" rows={4} style={{ ...inputStyle, resize: "vertical" }} />
               )}
 
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button onClick={() => setStep(4)} style={darkButtonStyle}>Back</button>
-                <button onClick={() => setStep(6)} style={lightButtonStyle}>Next</button>
+              <div style={navigationStyle}>
+                <button onClick={() => setStep(3)} style={darkButtonStyle}>Back</button>
+                <button
+                  disabled={!isStepComplete(4)}
+                  onClick={() => setStep(5)}
+                  style={getButtonStateStyle(lightButtonStyle, isStepComplete(4))}
+                >
+                  Next
+                </button>
               </div>
             </div>
 
             <div style={panelStyle}>
-              <label htmlFor="medication-indication" style={{ display: "block", marginBottom: "8px", fontSize: "24px", fontWeight: "bold" }}>
+              <label htmlFor="medication-indication" style={{ ...questionStyle, display: "block" }}>
                 Why are you taking this medication?
               </label>
-              <p style={{ marginTop: 0, marginBottom: "16px", fontSize: "15px" }}>Optional</p>
               <textarea
                 id="medication-indication"
                 value={indication}
                 onChange={(e) => setIndication(e.target.value)}
-                placeholder="Blood pressure, pain, allergy"
+                placeholder=""
                 rows={4}
                 style={{ ...inputStyle, resize: "vertical" }}
               />
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button onClick={() => setStep(5)} style={darkButtonStyle}>Back</button>
-                <button onClick={() => setStep(7)} style={lightButtonStyle}>Next</button>
+              <div style={navigationStyle}>
+                <button onClick={() => setStep(4)} style={darkButtonStyle}>Back</button>
+                <button onClick={() => setStep(6)} style={lightButtonStyle}>
+                  {indication.trim() ? "Next" : "Skip"}
+                </button>
               </div>
             </div>
 
             <div style={panelStyle}>
-              <p style={{ marginTop: 0, marginBottom: "16px", fontSize: "24px", fontWeight: "bold" }}>
+              <p style={questionStyle}>
                 Review your medication
               </p>
               <div style={{ display: "grid", gap: "12px", marginBottom: "24px" }}>
@@ -885,9 +991,13 @@ function MedicationWizard({
                   </div>
                 ))}
               </div>
-              <div style={{ display: "flex", gap: "12px" }}>
-                <button onClick={() => setStep(6)} style={darkButtonStyle}>Back</button>
-                <button onClick={onSave} style={lightButtonStyle}>
+              <div style={navigationStyle}>
+                <button onClick={() => setStep(5)} style={darkButtonStyle}>Back</button>
+                <button
+                  disabled={!canSaveMedication}
+                  onClick={onSave}
+                  style={getButtonStateStyle(lightButtonStyle, canSaveMedication)}
+                >
                   {editingMedicationId === null ? "Save" : "Save changes"}
                 </button>
               </div>

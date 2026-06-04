@@ -1,8 +1,11 @@
 import { useState } from "react";
 import type { ScheduledDoseWithStatus } from "../types";
+import { DrawnCheck, DrawnChevron, DrawnPlus, DrawnX } from "./DrawnIcons";
+import { IconButton } from "./IconButton";
 
 type TrackerPageProps = {
   dateLabel: string;
+  selectedDate: Date;
   scheduledDoses: ScheduledDoseWithStatus[];
   completingDoseIds: string[];
   onPreviousDay: () => void;
@@ -70,74 +73,9 @@ const EmptyTrackerBox = () => (
   />
 );
 
-const DrawnX = ({ size = 14, color = "#1a5334" }) => (
-  <>
-    <span
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        width: `${size}px`,
-        height: "2px",
-        borderRadius: "999px",
-        backgroundColor: color,
-        transform: "rotate(45deg)",
-      }}
-    />
-    <span
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        width: `${size}px`,
-        height: "2px",
-        borderRadius: "999px",
-        backgroundColor: color,
-        transform: "rotate(-45deg)",
-      }}
-    />
-  </>
-);
-
-const DrawnCheck = () => (
-  <span
-    aria-hidden="true"
-    style={{
-      width: "16px",
-      height: "9px",
-      borderLeft: "3px solid white",
-      borderBottom: "3px solid white",
-      transform: "rotate(-45deg) translate(1px, -1px)",
-      boxSizing: "border-box",
-    }}
-  />
-);
-
-const DrawnPlus = () => (
-  <>
-    <span
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        width: "16px",
-        height: "2px",
-        borderRadius: "999px",
-        backgroundColor: "white",
-      }}
-    />
-    <span
-      aria-hidden="true"
-      style={{
-        position: "absolute",
-        width: "2px",
-        height: "16px",
-        borderRadius: "999px",
-        backgroundColor: "white",
-      }}
-    />
-  </>
-);
-
 function TrackerPage({
   dateLabel,
+  selectedDate,
   scheduledDoses,
   completingDoseIds,
   onPreviousDay,
@@ -158,37 +96,58 @@ function TrackerPage({
   const selectedGroup =
     doseGroups.find((group) => group.medicationId === selectedMedicationId) ??
     null;
+  const isFutureDate = (() => {
+    const selectedDateStart = new Date(selectedDate);
+    selectedDateStart.setHours(0, 0, 0, 0);
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    return selectedDateStart.getTime() > todayStart.getTime();
+  })();
 
   return (
     <section style={{ padding: "24px", color: "#1a5334" }}>
       <div
         style={{
-          display: "flex",
+          display: "grid",
+          gridTemplateColumns: "42px minmax(0, 1fr) 42px",
           alignItems: "center",
-          justifyContent: "space-between",
+          columnGap: "8px",
           marginBottom: "24px",
         }}
       >
         <button
+          className="round-icon-button"
           style={{
-            border: "none",
-            backgroundColor: "transparent",
+            width: "42px",
+            height: "42px",
+            borderRadius: "50%",
+            border: "1px solid transparent",
+            backgroundColor: "rgba(255, 255, 255, 0.62)",
             color: "#1a5334",
             fontSize: "28px",
             cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
+            lineHeight: 1,
           }}
           onClick={onPreviousDay}
         >
-          {"<"}
+          <DrawnChevron direction="left" />
         </button>
 
         <div
           style={{
             display: "flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: "10px",
             fontSize: "20px",
             fontWeight: "bold",
+            textAlign: "center",
           }}
         >
           <span
@@ -219,16 +178,25 @@ function TrackerPage({
         </div>
 
         <button
+          className="round-icon-button"
           style={{
-            border: "none",
-            backgroundColor: "transparent",
+            width: "42px",
+            height: "42px",
+            borderRadius: "50%",
+            border: "1px solid transparent",
+            backgroundColor: "rgba(255, 255, 255, 0.62)",
             color: "#1a5334",
             fontSize: "28px",
             cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 0,
+            lineHeight: 1,
           }}
           onClick={onNextDay}
         >
-          {">"}
+          <DrawnChevron direction="right" />
         </button>
       </div>
 
@@ -291,8 +259,8 @@ function TrackerPage({
             <span
               aria-hidden="true"
               style={{
-                width: "42px",
-                height: "42px",
+                width: "36px",
+                height: "36px",
                 borderRadius: "50%",
                 border: "2px solid #1a5334",
                 backgroundColor: "#1a5334",
@@ -304,7 +272,7 @@ function TrackerPage({
                 position: "relative",
               }}
             >
-              <DrawnPlus />
+              <DrawnPlus size={22} />
             </span>
           </button>
         ))}
@@ -338,8 +306,8 @@ function TrackerPage({
                     padding: "14px 16px",
                     borderRadius: "8px",
                     border: "1px solid #d8e5dc",
-                    backgroundColor: "#eef7f1",
-                    color: "#1a5334",
+                    backgroundColor: "#1a5334",
+                    color: "white",
                     cursor: "pointer",
                     textAlign: "left",
                     width: "100%",
@@ -349,7 +317,7 @@ function TrackerPage({
                     <p style={{ margin: 0, fontWeight: "bold" }}>
                       {group.medicationName}
                     </p>
-                    <p style={{ margin: "4px 0 0", fontSize: "14px" }}>
+                    <p style={{ margin: "4px 0 0", fontSize: "14px", opacity: 0.85 }}>
                       {group.takenCount}/{group.totalCount} doses taken
                     </p>
                   </div>
@@ -360,7 +328,7 @@ function TrackerPage({
                       width: "34px",
                       height: "34px",
                       borderRadius: "50%",
-                      border: "1px solid #1a5334",
+                      border: "1px solid white",
                       backgroundColor: "transparent",
                       display: "inline-flex",
                       alignItems: "center",
@@ -370,7 +338,7 @@ function TrackerPage({
                       flexShrink: 0,
                     }}
                   >
-                    <DrawnX />
+                    <DrawnX color="white" />
                   </span>
                 </button>
               ))}
@@ -412,14 +380,14 @@ function TrackerPage({
             <div
               style={{
                 display: "flex",
-                alignItems: "flex-start",
+                alignItems: "center",
                 justifyContent: "space-between",
                 gap: "16px",
                 marginBottom: "16px",
               }}
             >
               <div>
-                <h3 style={{ margin: 0, fontSize: "20px" }}>
+                <h3 style={{ margin: 0, fontSize: "22px" }}>
                   {selectedGroup.medicationName}
                 </h3>
                 <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
@@ -427,26 +395,12 @@ function TrackerPage({
                 </p>
               </div>
 
-              <button
-                aria-label="Close dose options"
+              <IconButton
+                ariaLabel="Close dose options"
                 onClick={() => setSelectedMedicationId(null)}
-                style={{
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  border: "1px solid #d8e5dc",
-                  backgroundColor: "transparent",
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: 0,
-                  position: "relative",
-                  flexShrink: 0,
-                }}
               >
                 <DrawnX />
-              </button>
+              </IconButton>
             </div>
 
             <div style={{ display: "grid", gap: "10px" }}>
@@ -464,61 +418,51 @@ function TrackerPage({
                       gap: "14px",
                       padding: "12px",
                       borderRadius: "8px",
-                      border: "1px solid #d8e5dc",
-                      backgroundColor: isTaken ? "#eef7f1" : "white",
+                      border: isTaken ? "1px solid #1a5334" : "1px solid #d8e5dc",
+                      backgroundColor: isTaken ? "#1a5334" : "white",
+                      color: isTaken ? "white" : "#1a5334",
                     }}
                   >
                     <div>
                       <p style={{ margin: 0, fontWeight: "bold" }}>
                         {dose.doseLabel}
                       </p>
-                      <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: "14px" }}>
-                        {isTaken ? "Taken" : "Not taken yet"}
+                      <p
+                        style={{
+                          margin: "4px 0 0",
+                          color: isTaken ? "rgba(255, 255, 255, 0.82)" : "#64748b",
+                          fontSize: "14px",
+                        }}
+                      >
+                        {isTaken ? "Taken" : isFutureDate ? "Scheduled" : "Not taken yet"}
                       </p>
                     </div>
 
                     {isTaken ? (
-                      <button
-                        aria-label={`Move ${dose.doseLabel} back to medication to take`}
+                      <IconButton
+                        ariaLabel={`Move ${dose.doseLabel} back to medication to take`}
                         onClick={() => onUndoTakenDose(dose.id)}
-                        style={{
-                          width: "38px",
-                          height: "38px",
-                          borderRadius: "50%",
-                          border: "1px solid #1a5334",
-                          backgroundColor: "transparent",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          padding: 0,
-                          position: "relative",
-                        }}
+                        size={38}
+                        border="1px solid white"
                       >
-                        <DrawnX />
-                      </button>
+                        <DrawnX color="white" />
+                      </IconButton>
                     ) : (
-                      <button
-                        aria-label={`Mark ${dose.doseLabel} as taken`}
+                      <IconButton
+                        ariaLabel={`Mark ${dose.doseLabel} as taken`}
                         onClick={() => onMarkDoseAsTaken(dose.id)}
+                        disabled={isFutureDate}
+                        size={42}
+                        border="2px solid #1a5334"
+                        backgroundColor="white"
                         style={{
-                          width: "42px",
-                          height: "42px",
-                          borderRadius: "50%",
-                          border: "2px solid #1a5334",
-                          backgroundColor: "#1a5334",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          padding: 0,
                           animation: isCompleting
                             ? "medicationCompleteSpin 0.65s ease forwards"
                             : "none",
                         }}
                       >
-                        <DrawnCheck />
-                      </button>
+                        <DrawnCheck color="#1a5334" />
+                      </IconButton>
                     )}
                   </div>
                 );

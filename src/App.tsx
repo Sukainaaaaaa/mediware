@@ -312,7 +312,7 @@ function App() {
   const startEditingMedication = (medication: Medication) => {
     populateMedicationForm(medication);
     setEditingMedicationId(medication.id);
-    setAddMedicationStep(1);
+    setAddMedicationStep(0);
     setShowAddForm(true);
     setSelectedMedicationId(null);
     setIsConfirmingDeleteMedication(false);
@@ -384,6 +384,44 @@ function App() {
             background-color: #236b43 !important;
             box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.22);
           }
+
+          .round-icon-button {
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            transition:
+              background-color 0.16s ease,
+              box-shadow 0.16s ease,
+              transform 0.16s ease;
+          }
+
+          .round-icon-button:active {
+            background-color: rgba(26, 83, 52, 0.1) !important;
+            transform: scale(0.96);
+          }
+
+          .round-icon-button:focus-visible {
+            box-shadow: 0 0 0 3px rgba(26, 83, 52, 0.18);
+          }
+
+          button {
+            -webkit-tap-highlight-color: transparent;
+            appearance: none;
+            outline: none;
+            touch-action: manipulation;
+            user-select: none;
+          }
+
+          button::-moz-focus-inner {
+            border: 0;
+          }
+
+          button:active {
+            filter: brightness(0.96);
+          }
+
+          button:focus-visible {
+            box-shadow: 0 0 0 3px rgba(26, 83, 52, 0.18);
+          }
         `}
       </style>
       {/* Top bar */}
@@ -397,6 +435,7 @@ function App() {
       {activePage === "tracker" && (
         <TrackerPage
           dateLabel={getDateLabel(selectedDate)}
+          selectedDate={selectedDate}
           scheduledDoses={scheduledDoses}
           completingDoseIds={completingDoseIds}
           onPreviousDay={goToPreviousDay}

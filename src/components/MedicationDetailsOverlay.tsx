@@ -1,4 +1,6 @@
 import type { Medication } from "../types";
+import { DrawnX } from "./DrawnIcons";
+import { IconButton } from "./IconButton";
 import { getMedicationScheduleSummary } from "../utils/medicationSchedule";
 
 type MedicationDetailsOverlayProps = {
@@ -71,23 +73,12 @@ function MedicationDetailsOverlay({
             {medication.medicationName}
           </h3>
 
-          <button
-            aria-label="Close medication details"
+          <IconButton
+            ariaLabel="Close medication details"
             onClick={onClose}
-            style={{
-              width: "34px",
-              height: "34px",
-              borderRadius: "50%",
-              border: "1px solid #1a5334",
-              backgroundColor: "transparent",
-              color: "#1a5334",
-              fontSize: "20px",
-              cursor: "pointer",
-              lineHeight: "30px",
-            }}
           >
-            ×
-          </button>
+            <DrawnX />
+          </IconButton>
         </div>
 
         {[

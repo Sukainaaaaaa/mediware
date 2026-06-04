@@ -1,3 +1,6 @@
+import { DrawnPlus } from "./DrawnIcons";
+import { IconButton } from "./IconButton";
+
 type HeaderProps = {
   onAddMedication: () => void;
 };
@@ -23,17 +26,19 @@ function Header({ onAddMedication }: HeaderProps) {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "16px",
+          gap: "10px",
+          marginRight: "-12px",
         }}
       >
         <button
           aria-label="Account"
+          className="round-icon-button"
           style={{
-            width: "42px",
-            height: "42px",
+            width: "38px",
+            height: "38px",
             borderRadius: "50%",
             border: "1px solid #1a5334",
-            backgroundColor: "white",
+            backgroundColor: "#1a5334",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -44,25 +49,24 @@ function Header({ onAddMedication }: HeaderProps) {
           <span
             aria-hidden="true"
             style={{
-              width: "17px",
-              height: "17px",
+              width: "13px",
+              height: "13px",
               borderRadius: "50%",
-              border: "2px solid #1a5334",
+              backgroundColor: "white",
               position: "relative",
               boxSizing: "border-box",
-              marginTop: "-8px",
+              marginTop: "-9px",
             }}
           >
             <span
               style={{
                 position: "absolute",
                 left: "50%",
-                top: "19px",
-                width: "27px",
-                height: "15px",
-                border: "2px solid #1a5334",
-                borderBottom: "none",
-                borderRadius: "16px 16px 0 0",
+                top: "18px",
+                width: "25px",
+                height: "13px",
+                backgroundColor: "white",
+                borderRadius: "16px 16px 5px 5px",
                 transform: "translateX(-50%)",
                 boxSizing: "border-box",
               }}
@@ -70,33 +74,15 @@ function Header({ onAddMedication }: HeaderProps) {
           </span>
         </button>
 
-        <button
+        <IconButton
+          ariaLabel="Add medication"
           onClick={onAddMedication}
-          style={{
-            width: "42px",
-            height: "42px",
-            borderRadius: "50%",
-            border: "none",
-            backgroundColor: "#1a5334",
-            color: "white",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "28px",
-            cursor: "pointer",
-            lineHeight: 1,
-          }}
+          size={38}
+          border="none"
+          backgroundColor="#1a5334"
         >
-          <span
-            aria-hidden="true"
-            style={{
-              display: "block",
-              transform: "translateY(-2px)",
-            }}
-          >
-            +
-          </span>
-        </button>
+          <DrawnPlus size={22} />
+        </IconButton>
       </div>
     </header>
   );

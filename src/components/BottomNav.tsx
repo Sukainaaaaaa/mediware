@@ -1,14 +1,19 @@
 import type { Page } from "../types";
+import { DrawnPlus } from "./DrawnIcons";
 
 type BottomNavProps = {
   activePage: Page;
   onChangePage: (page: Page) => void;
 };
 
-const bottomNavItems: { page: Page; label: string; icon: string }[] = [
+const bottomNavItems: {
+  page: Page;
+  label: string;
+  icon: string;
+}[] = [
   { page: "tracker", label: "Tracker", icon: "✓" },
   { page: "adherence", label: "Adherence", icon: "%" },
-  { page: "medications", label: "Medications", icon: "+" },
+  { page: "medications", label: "Medications", icon: "plus" },
   { page: "sideEffects", label: "Side effects", icon: "!" },
 ];
 
@@ -57,12 +62,22 @@ function BottomNav({ activePage, onChangePage }: BottomNavProps) {
             <span
               aria-hidden="true"
               style={{
+                width: "22px",
+                height: "22px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
                 fontSize: "20px",
                 lineHeight: 1,
                 fontWeight: "bold",
               }}
             >
-              {item.icon}
+              {item.icon === "plus" ? (
+                <DrawnPlus size={18} color={isActive ? "#1a5334" : "white"} />
+              ) : (
+                item.icon
+              )}
             </span>
             <span
               style={{

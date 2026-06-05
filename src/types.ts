@@ -1,5 +1,13 @@
 
-export type { Medication, ScheduledDose, ScheduledDoseWithStatus, DoseStatus, Page };
+export type {
+  Medication,
+  ScheduledDose,
+  ScheduledDoseWithStatus,
+  DoseStatus,
+  Page,
+  SideEffectLog,
+  SideEffectSeverity,
+};
 
 type Medication = {
   id: number;
@@ -31,6 +39,20 @@ type DoseStatus = "taken" | "missed" | "pending";
 
 type ScheduledDoseWithStatus = ScheduledDose & {
   status: DoseStatus;
+};
+
+type SideEffectSeverity = "Mild" | "Moderate" | "Severe";
+
+type SideEffectLog = {
+  id: number;
+  medicationIds: number[];
+  medicationNames: string[];
+  medicationId?: number | null;
+  medicationName?: string;
+  symptom: string;
+  severity: SideEffectSeverity;
+  date: string;
+  notes: string;
 };
 
 type Page = "tracker" | "adherence" | "medications" | "sideEffects";

@@ -1,10 +1,27 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import type { PointerEvent } from "react";
 import type { Medication, ScheduledDoseWithStatus } from "../types";
 import { getScheduledDosesWithStatusForDate } from "../utils/medicationSchedule";
 
 type AdherencePageProps = {
   medications: Medication[];
   takenDoseIds: string[];
+};
+
+type AdherenceRange = "W" | "M" | "6M" | "Y";
+
+type ChartDose = ScheduledDoseWithStatus & { date: Date };
+
+type ChartItem = {
+  key: string;
+  date: Date;
+  title: string;
+  xLabel: string;
+  doses: ChartDose[];
+  taken: number;
+  missed: number;
+  pending: number;
+  total: number;
 };
 
 const getStartOfDay = (date: Date) => {
@@ -14,12 +31,28 @@ const getStartOfDay = (date: Date) => {
   return startOfDay;
 };
 
-const getLastSevenDays = () => {
+const getVisibleDays = (dayOffset: number, dayCount: number) => {
   const today = getStartOfDay(new Date());
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() + dayOffset);
 
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (6 - index));
+  return Array.from({ length: dayCount }, (_, index) => {
+    const date = new Date(endDate);
+    date.setDate(endDate.getDate() - (dayCount - 1 - index));
+
+    return date;
+  });
+};
+
+const getDaysBetween = (startDate: Date, endDate: Date) => {
+  const start = getStartOfDay(startDate);
+  const end = getStartOfDay(endDate);
+  const dayCount =
+    Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+
+  return Array.from({ length: Math.max(0, dayCount) }, (_, index) => {
+    const date = new Date(start);
+    date.setDate(start.getDate() + index);
 
     return date;
   });
@@ -56,6 +89,19 @@ const formatSelectedChartDate = (date: Date) => {
   });
 };
 
+const formatMonthLabel = (date: Date) => {
+  return date.toLocaleDateString("en-GB", {
+    month: "short",
+  });
+};
+
+const formatMonthTitle = (date: Date) => {
+  return date.toLocaleDateString("en-GB", {
+    month: "short",
+    year: "numeric",
+  });
+};
+
 const formatDayLabel = (date: Date) => {
   return date.toLocaleDateString("en-GB", {
     weekday: "short",
@@ -71,15 +117,7 @@ const getDateKey = (date: Date) => {
 };
 
 const getSelectedDaySummary = (
-  day:
-    | {
-        date: Date;
-        taken: number;
-        missed: number;
-        pending: number;
-        total: number;
-      }
-    | undefined,
+  day: ChartItem | undefined,
   today: Date
 ) => {
   if (!day || day.total === 0) {
@@ -114,49 +152,136 @@ const getSelectedDaySummary = (
   };
 };
 
+const summarizeDoses = (
+  key: string,
+  date: Date,
+  title: string,
+  xLabel: string,
+  doses: ChartDose[]
+): ChartItem => {
+  const taken = doses.filter((dose) => dose.status === "taken").length;
+  const missed = doses.filter((dose) => dose.status === "missed").length;
+  const pending = doses.filter((dose) => dose.status === "pending").length;
+
+  return {
+    key,
+    date,
+    title,
+    xLabel,
+    doses,
+    taken,
+    missed,
+    pending,
+    total: doses.length,
+  };
+};
+
 function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [isMissedDosesOpen, setIsMissedDosesOpen] = useState(false);
   const [isMissedFilterOpen, setIsMissedFilterOpen] = useState(false);
   const [missedMedicationFilter, setMissedMedicationFilter] = useState("All");
+  const [weekDayOffset, setWeekDayOffset] = useState(0);
+  const [activeRange, setActiveRange] = useState<AdherenceRange>("W");
   const [selectedDayKey, setSelectedDayKey] = useState(() =>
     getDateKey(new Date())
   );
+  const chartDragStartX = useRef<number | null>(null);
   const today = getStartOfDay(new Date());
-  const weeklyDays = getLastSevenDays().map((date) => {
-    const doses = getScheduledDosesWithStatusForDate(
+  const rangeEndDate = new Date(today);
+  rangeEndDate.setDate(today.getDate() + weekDayOffset);
+  const getDosesForDate = (date: Date): ChartDose[] =>
+    getScheduledDosesWithStatusForDate(
       date,
       medications,
       takenDoseIds,
       today
-    );
+    ).map((dose) => ({ ...dose, date }));
 
-    const taken = doses.filter((dose) => dose.status === "taken").length;
-    const missed = doses.filter((dose) => dose.status === "missed").length;
-    const pending = doses.filter((dose) => dose.status === "pending").length;
+  const chartItems: ChartItem[] = (() => {
+    if (activeRange === "6M") {
+      return Array.from({ length: 26 }, (_, index) => {
+        const weekEnd = new Date(rangeEndDate);
+        weekEnd.setDate(rangeEndDate.getDate() - (25 - index) * 7);
+        const weekStart = new Date(weekEnd);
+        weekStart.setDate(weekEnd.getDate() - 6);
+        const doses = getDaysBetween(weekStart, weekEnd).flatMap(getDosesForDate);
+        const shouldShowMonth =
+          index === 0 ||
+          index === 25 ||
+          weekStart.getMonth() !==
+            new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() - 7).getMonth();
 
-    return {
-      date,
-      doses,
-      taken,
-      missed,
-      pending,
-      total: doses.length,
-    };
-  });
-  const weeklyDoses = weeklyDays.flatMap((day) =>
-    day.doses.map((dose) => ({ ...dose, date: day.date }))
-  );
+        return summarizeDoses(
+          `${getDateKey(weekStart)}-${getDateKey(weekEnd)}`,
+          weekEnd,
+          `${formatRangeStart(weekStart)} - ${formatRangeEnd(weekEnd)}`,
+          shouldShowMonth ? formatMonthLabel(weekStart) : "",
+          doses
+        );
+      });
+    }
 
-  const takenCount = weeklyDoses.filter((dose) => dose.status === "taken").length;
-  const missedCount = weeklyDoses.filter((dose) => dose.status === "missed").length;
-  const pendingCount = weeklyDoses.filter((dose) => dose.status === "pending").length;
+    if (activeRange === "Y") {
+      return Array.from({ length: 12 }, (_, index) => {
+        const monthDate = new Date(
+          rangeEndDate.getFullYear(),
+          rangeEndDate.getMonth() - (11 - index),
+          1
+        );
+        const monthStart = new Date(
+          monthDate.getFullYear(),
+          monthDate.getMonth(),
+          1
+        );
+        const monthEnd = new Date(
+          monthDate.getFullYear(),
+          monthDate.getMonth() + 1,
+          0
+        );
+        const doses = getDaysBetween(monthStart, monthEnd).flatMap(getDosesForDate);
+
+        return summarizeDoses(
+          `${monthStart.getFullYear()}-${monthStart.getMonth()}`,
+          monthEnd,
+          formatMonthTitle(monthStart),
+          formatMonthLabel(monthStart),
+          doses
+        );
+      });
+    }
+
+    const visibleDayCount = activeRange === "M" ? 30 : 7;
+
+    return getVisibleDays(weekDayOffset, visibleDayCount).map((date, index) => {
+      const doses = getDosesForDate(date);
+      const xLabel =
+        activeRange === "M"
+          ? index % 7 === 0 || index === visibleDayCount - 1
+            ? String(date.getDate())
+            : ""
+          : formatDayLabel(date);
+
+      return summarizeDoses(
+        getDateKey(date),
+        date,
+        formatSelectedChartDate(date),
+        xLabel,
+        doses
+      );
+    });
+  })();
+  const chartDoses = chartItems.flatMap((item) => item.doses);
+
+  const takenCount = chartDoses.filter((dose) => dose.status === "taken").length;
+  const missedCount = chartDoses.filter((dose) => dose.status === "missed").length;
+  const pendingCount = chartDoses.filter((dose) => dose.status === "pending").length;
   const completedOrMissedCount = takenCount + missedCount;
   const adherencePercent =
     completedOrMissedCount > 0
       ? Math.round((takenCount / completedOrMissedCount) * 100)
       : 0;
-  const missedDoses = weeklyDoses.filter(
+  const missedDoses = chartDoses.filter(
     (dose): dose is ScheduledDoseWithStatus & { date: Date } =>
       dose.status === "missed"
   );
@@ -169,16 +294,74 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
       : missedDoses.filter(
           (dose) => dose.medication.medicationName === missedMedicationFilter
         );
-  const weekStartDate = weeklyDays[0]?.date;
-  const weekEndDate = weeklyDays[weeklyDays.length - 1]?.date;
+  const rangeStartItem = chartItems[0];
+  const rangeEndItem = chartItems[chartItems.length - 1];
   const weekRangeLabel =
-    weekStartDate && weekEndDate
-      ? `${formatRangeStart(weekStartDate)} - ${formatRangeEnd(weekEndDate)}`
+    rangeStartItem && rangeEndItem
+      ? activeRange === "Y"
+        ? `${formatMonthTitle(rangeStartItem.date)} - ${formatMonthTitle(
+            rangeEndItem.date
+          )}`
+        : activeRange === "6M"
+          ? `${rangeStartItem.title.split(" - ")[0]} - ${formatRangeEnd(
+              rangeEndItem.date
+            )}`
+          : `${formatRangeStart(rangeStartItem.date)} - ${formatRangeEnd(
+              rangeEndItem.date
+            )}`
       : "";
+  const rangeTitle =
+    activeRange === "Y"
+      ? "Last year"
+      : activeRange === "6M"
+        ? "Last 6 months"
+        : activeRange === "M"
+          ? "Last 30 days"
+          : "Last 7 days";
   const selectedDay =
-    weeklyDays.find((day) => getDateKey(day.date) === selectedDayKey) ??
-    weeklyDays[weeklyDays.length - 1];
+    chartItems.find((item) => item.key === selectedDayKey) ??
+    chartItems[chartItems.length - 1];
+  const selectedChartKey = selectedDay?.key;
   const selectedDaySummary = getSelectedDaySummary(selectedDay, today);
+
+  const moveVisibleDays = (dayChange: number) => {
+    setWeekDayOffset((currentOffset) => {
+      const nextOffset = currentOffset + dayChange;
+      const nextEndDate = getStartOfDay(new Date());
+      nextEndDate.setDate(nextEndDate.getDate() + nextOffset);
+      setSelectedDayKey(getDateKey(nextEndDate));
+
+      return nextOffset;
+    });
+  };
+
+  const handleChartPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    chartDragStartX.current = event.clientX;
+  };
+
+  const handleChartPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (chartDragStartX.current === null) {
+      return;
+    }
+
+    const dragDistance = event.clientX - chartDragStartX.current;
+    chartDragStartX.current = null;
+
+    if (Math.abs(dragDistance) < 36) {
+      return;
+    }
+
+    const dragPixelsPerDay =
+      activeRange === "Y" ? 42 : activeRange === "6M" ? 24 : activeRange === "M" ? 18 : 56;
+    const dayMultiplier =
+      activeRange === "Y" ? 30 : activeRange === "6M" ? 7 : 1;
+    const dayChange = Math.max(
+      1,
+      Math.round(Math.abs(dragDistance) / dragPixelsPerDay)
+    ) * dayMultiplier;
+
+    moveVisibleDays(dragDistance > 0 ? -dayChange : dayChange);
+  };
 
   return (
     <section
@@ -243,7 +426,7 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
             textTransform: "uppercase",
           }}
         >
-          Last 7 days
+          {rangeTitle}
         </p>
         <p style={{ margin: "0 0 6px", color: "#64748b", fontSize: "14px" }}>
           {weekRangeLabel}
@@ -310,7 +493,7 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
           aria-label="Adherence range"
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(5, 1fr)",
+            gridTemplateColumns: "repeat(4, 1fr)",
             gap: "6px",
             padding: "4px",
             borderRadius: "8px",
@@ -318,12 +501,16 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
             marginBottom: "18px",
           }}
         >
-          {["D", "W", "M", "6M", "Y"].map((range) => {
-            const isActive = range === "W";
+          {(["W", "M", "6M", "Y"] as AdherenceRange[]).map((range) => {
+            const isActive = range === activeRange;
 
             return (
               <button
                 key={range}
+                onClick={() => {
+                  setActiveRange(range);
+                  setSelectedDayKey("");
+                }}
                 style={{
                   minHeight: "34px",
                   borderRadius: "6px",
@@ -344,28 +531,42 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
         </div>
 
         <div
+          onPointerDown={handleChartPointerDown}
+          onPointerUp={handleChartPointerUp}
+          onPointerCancel={() => {
+            chartDragStartX.current = null;
+          }}
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(7, 1fr)",
-            gap: "10px",
+            gridTemplateColumns: `repeat(${chartItems.length}, 1fr)`,
+            gap:
+              activeRange === "Y"
+                ? "8px"
+                : activeRange === "6M"
+                  ? "4px"
+                  : activeRange === "M"
+                    ? "3px"
+                    : "10px",
             alignItems: "end",
             minHeight: "170px",
+            cursor: "grab",
+            touchAction: "pan-y",
           }}
         >
-          {weeklyDays.map((day) => {
-            const takenHeight = day.total > 0 ? (day.taken / day.total) * 112 : 0;
-            const missedHeight = day.total > 0 ? (day.missed / day.total) * 112 : 0;
+          {chartItems.map((item) => {
+            const takenHeight = item.total > 0 ? (item.taken / item.total) * 112 : 0;
+            const missedHeight = item.total > 0 ? (item.missed / item.total) * 112 : 0;
 
             return (
               <button
-                key={day.date.toISOString()}
-                onClick={() => setSelectedDayKey(getDateKey(day.date))}
+                key={item.key}
+                onClick={() => setSelectedDayKey(item.key)}
                 style={{
                   minWidth: 0,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "8px",
+                  gap: activeRange === "W" ? "8px" : "6px",
                   border: "none",
                   backgroundColor: "transparent",
                   padding: 0,
@@ -373,15 +574,22 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
                 }}
               >
                 <div
-                  title={`${day.taken} taken, ${day.missed} missed`}
+                  title={`${item.taken} taken, ${item.missed} missed`}
                   style={{
                     width: "100%",
-                    maxWidth: "34px",
+                    maxWidth:
+                      activeRange === "Y"
+                        ? "24px"
+                        : activeRange === "6M"
+                          ? "12px"
+                          : activeRange === "M"
+                            ? "10px"
+                            : "34px",
                     height: "112px",
                     borderRadius: "999px",
                     backgroundColor: "#eef2f7",
                     border:
-                      getDateKey(day.date) === selectedDayKey
+                      item.key === selectedChartKey
                         ? "2px solid #1a5334"
                         : "1px solid #d8e5dc",
                     overflow: "hidden",
@@ -411,13 +619,13 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
                   style={{
                     margin: 0,
                     color:
-                      getDateKey(day.date) === selectedDayKey ? "#1a5334" : "#64748b",
-                    fontSize: "12px",
-                    fontWeight:
-                      getDateKey(day.date) === selectedDayKey ? "bold" : "normal",
+                      item.key === selectedChartKey ? "#1a5334" : "#64748b",
+                    fontSize: activeRange === "W" ? "12px" : "10px",
+                    fontWeight: item.key === selectedChartKey ? "bold" : "normal",
+                    minHeight: "14px",
                   }}
                 >
-                  {formatDayLabel(day.date)}
+                  {item.xLabel}
                 </p>
               </button>
             );
@@ -465,7 +673,7 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
             }}
           >
             <p style={{ margin: "0 0 6px", fontSize: "14px", fontWeight: "bold" }}>
-              {formatSelectedChartDate(selectedDay.date)}
+              {selectedDay.title}
             </p>
             <p style={{ margin: "0 0 4px", color: "#64748b", fontSize: "13px" }}>
               {selectedDaySummary.label}
@@ -488,7 +696,15 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
           }}
         >
           <button
-            onClick={() => setIsMissedDosesOpen((currentValue) => !currentValue)}
+            onClick={() => {
+              setIsMissedDosesOpen((currentValue) => {
+                if (currentValue) {
+                  setIsMissedFilterOpen(false);
+                }
+
+                return !currentValue;
+              });
+            }}
             style={{
               border: "none",
               backgroundColor: "transparent",
@@ -496,15 +712,22 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "9px",
               padding: 0,
+              minHeight: "34px",
             }}
           >
             <span
               aria-hidden="true"
               style={{
-                display: "inline-block",
-                fontSize: "16px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "16px",
+                height: "16px",
+                fontSize: "18px",
+                fontWeight: 900,
+                lineHeight: 1,
                 transform: isMissedDosesOpen ? "rotate(90deg)" : "rotate(0deg)",
                 transition: "transform 0.2s ease",
               }}
@@ -522,94 +745,96 @@ function AdherencePage({ medications, takenDoseIds }: AdherencePageProps) {
             </span>
           </button>
 
-          <div
-            style={{
-              position: "relative",
-              maxWidth: "190px",
-              minWidth: "150px",
-            }}
-          >
-            <button
-              aria-label="Filter missed doses by medication"
-              onClick={() => setIsMissedFilterOpen((currentValue) => !currentValue)}
+          {isMissedDosesOpen && (
+            <div
               style={{
-                width: "100%",
-                padding: "8px 10px",
-                borderRadius: "8px",
-                border: "1px solid #1a5334",
-                backgroundColor: "#1a5334",
-                color: "white",
-                fontSize: "14px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
-                textAlign: "left",
+                position: "relative",
+                maxWidth: "190px",
+                minWidth: "150px",
               }}
             >
-              <span
+              <button
+                aria-label="Filter missed doses by medication"
+                onClick={() => setIsMissedFilterOpen((currentValue) => !currentValue)}
                 style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {missedMedicationFilter === "All"
-                  ? "All medication"
-                  : missedMedicationFilter}
-              </span>
-              <span aria-hidden="true">{isMissedFilterOpen ? "^" : "v"}</span>
-            </button>
-
-            {isMissedFilterOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 6px)",
-                  right: 0,
-                  zIndex: 20,
                   width: "100%",
+                  padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #d8e5dc",
-                  backgroundColor: "white",
-                  boxShadow: "0 10px 24px rgba(26, 83, 52, 0.16)",
-                  overflow: "hidden",
+                  border: "1px solid #1a5334",
+                  backgroundColor: "#1a5334",
+                  color: "white",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                  textAlign: "left",
                 }}
               >
-                {["All", ...missedMedicationNames].map((medicationName) => {
-                  const label =
-                    medicationName === "All" ? "All medication" : medicationName;
-                  const isSelected = missedMedicationFilter === medicationName;
+                <span
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {missedMedicationFilter === "All"
+                    ? "All medication"
+                    : missedMedicationFilter}
+                </span>
+                <span aria-hidden="true">{isMissedFilterOpen ? "^" : "v"}</span>
+              </button>
 
-                  return (
-                    <button
-                      key={medicationName}
-                      onClick={() => {
-                        setMissedMedicationFilter(medicationName);
-                        setIsMissedFilterOpen(false);
-                      }}
-                      style={{
-                        width: "100%",
-                        padding: "10px",
-                        border: "none",
-                        borderBottom: "1px solid #eef2f7",
-                        backgroundColor: isSelected ? "#1a5334" : "white",
-                        color: isSelected ? "white" : "#1a5334",
-                        fontSize: "14px",
-                        fontWeight: isSelected ? "bold" : "normal",
-                        cursor: "pointer",
-                        textAlign: "left",
-                      }}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+              {isMissedFilterOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 6px)",
+                    right: 0,
+                    zIndex: 20,
+                    width: "100%",
+                    borderRadius: "8px",
+                    border: "1px solid #d8e5dc",
+                    backgroundColor: "white",
+                    boxShadow: "0 10px 24px rgba(26, 83, 52, 0.16)",
+                    overflow: "hidden",
+                  }}
+                >
+                  {["All", ...missedMedicationNames].map((medicationName) => {
+                    const label =
+                      medicationName === "All" ? "All medication" : medicationName;
+                    const isSelected = missedMedicationFilter === medicationName;
+
+                    return (
+                      <button
+                        key={medicationName}
+                        onClick={() => {
+                          setMissedMedicationFilter(medicationName);
+                          setIsMissedFilterOpen(false);
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          border: "none",
+                          borderBottom: "1px solid #eef2f7",
+                          backgroundColor: isSelected ? "#1a5334" : "white",
+                          color: isSelected ? "white" : "#1a5334",
+                          fontSize: "14px",
+                          fontWeight: isSelected ? "bold" : "normal",
+                          cursor: "pointer",
+                          textAlign: "left",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {isMissedDosesOpen &&

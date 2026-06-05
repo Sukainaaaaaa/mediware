@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
-import EmptyPage from "./components/EmptyPage";
 import AdherencePage from "./components/AdherencePage";
 import MedicationsPage from "./components/MedicationsPage";
 import MedicationDetailsOverlay from "./components/MedicationDetailsOverlay";
+import SideEffectsPage from "./components/SideEffectsPage";
 import TrackerPage from "./components/TrackerPage";
 import MedicationWizard from "./components/MedicationWizard";
-import type { Medication, Page } from "./types";
+import type { Medication, Page, SideEffectLog } from "./types";
 import { getScheduledDosesWithStatusForDate } from "./utils/medicationSchedule";
 import {
   loadMedications,
+  loadSideEffectLogs,
   loadTakenDoseIds,
   saveMedications,
+  saveSideEffectLogs,
   saveTakenDoseIds,
 } from "./utils/localStorage";
 
@@ -110,6 +112,8 @@ function App() {
   const [indication, setIndication] = useState("");
   const [medications, setMedications] = useState<Medication[]>(loadMedications);
   const [takenDoseIds, setTakenDoseIds] = useState<string[]>(loadTakenDoseIds);
+  const [sideEffectLogs, setSideEffectLogs] =
+    useState<SideEffectLog[]>(loadSideEffectLogs);
   const [completingDoseIds, setCompletingDoseIds] = useState<string[]>([]);
   const [selectedMedicationId, setSelectedMedicationId] = useState<number | null>(null);
   const [isConfirmingDeleteMedication, setIsConfirmingDeleteMedication] = useState(false);
@@ -128,6 +132,10 @@ function App() {
   useEffect(() => {
     saveTakenDoseIds(takenDoseIds);
   }, [takenDoseIds]);
+
+  useEffect(() => {
+    saveSideEffectLogs(sideEffectLogs);
+  }, [sideEffectLogs]);
 
   const resetAddMedicationForm = () => {
     setAddMedicationStep(0);
@@ -451,7 +459,20 @@ function App() {
           takenDoseIds={takenDoseIds}
         />
       )}
-      {activePage === "sideEffects" && <EmptyPage title="Side effects" />}
+      {activePage === "sideEffects" && (
+        <SideEffectsPage
+          medications={medications}
+          sideEffectLogs={sideEffectLogs}
+          onAddSideEffectLog={(sideEffectLog) =>
+            setSideEffectLogs((currentLogs) => [...currentLogs, sideEffectLog])
+          }
+          onDeleteSideEffectLog={(sideEffectLogId) =>
+            setSideEffectLogs((currentLogs) =>
+              currentLogs.filter((log) => log.id !== sideEffectLogId)
+            )
+          }
+        />
+      )}
 
       {activePage === "medications" && (
         <MedicationsPage

@@ -1,9 +1,17 @@
-import type { Medication } from "../types";
+import type { Medication, SideEffectLog } from "../types";
 
-export { loadMedications, saveMedications, loadTakenDoseIds, saveTakenDoseIds };
+export {
+  loadMedications,
+  saveMedications,
+  loadTakenDoseIds,
+  saveTakenDoseIds,
+  loadSideEffectLogs,
+  saveSideEffectLogs,
+};
 
 const medicationsKey = "mediware-medications";
 const takenDoseIdsKey = "mediware-taken-dose-ids";
+const sideEffectLogsKey = "mediware-side-effect-logs";
 
 const readStoredArray = <T,>(key: string): T[] => {
   try {
@@ -39,4 +47,12 @@ const loadTakenDoseIds = () => {
 
 const saveTakenDoseIds = (takenDoseIds: string[]) => {
   saveStoredArray(takenDoseIdsKey, takenDoseIds);
+};
+
+const loadSideEffectLogs = () => {
+  return readStoredArray<SideEffectLog>(sideEffectLogsKey);
+};
+
+const saveSideEffectLogs = (sideEffectLogs: SideEffectLog[]) => {
+  saveStoredArray(sideEffectLogsKey, sideEffectLogs);
 };

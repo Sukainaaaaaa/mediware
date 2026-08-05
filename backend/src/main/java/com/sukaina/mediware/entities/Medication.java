@@ -1,9 +1,15 @@
-package com.sukaina.mediware;
+package com.sukaina.mediware.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.OneToOne;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+
 
 @Entity
 public class Medication {
@@ -11,7 +17,9 @@ public class Medication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     private String form;
     private String strength;
     private String strengthUnit;
@@ -20,6 +28,12 @@ public class Medication {
     private String created_at;
     private String updated_at;
     private boolean isActive;
+    @OneToOne(mappedBy = "medication", cascade = CascadeType.ALL, orphanRemoval = true)
+    private MedicationSchedule medicationSchedule;
+
+    public Medication() {
+    
+    }   
 
     // Getters and Setters
     public Long getId() {
@@ -38,12 +52,12 @@ public class Medication {
         this.name = name;
     }
 
-    public Long getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     public String getForm() {
@@ -109,5 +123,13 @@ public class Medication {
     public void setActive(boolean isActive) {
         this.isActive = isActive;
     }
+
+    public MedicationSchedule getMedicationSchedule() {
+        return medicationSchedule;
+    }
+
+    public void setMedicationSchedule(MedicationSchedule medicationSchedule) {
+        this.medicationSchedule = medicationSchedule;
+}
 
 }

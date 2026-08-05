@@ -2,8 +2,10 @@ package com.sukaina.mediware.controllers;
 
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
-import com.sukaina.mediware.Medication;
+import com.sukaina.mediware.entities.Medication;
 import com.sukaina.mediware.services.MedicationService;
+import com.sukaina.mediware.entities.MedicationSchedule;
+import com.sukaina.mediware.dto.CreateMedicationRequest;
 
 @RestController
 @RequestMapping("/api/medications")
@@ -21,8 +23,8 @@ public class MedicationController {
     }
 
     @PostMapping("/")
-    public Medication createMedication(@RequestBody Medication medication) {
-        return medicationService.createMedication(medication);
+    public Medication createMedication(@RequestBody CreateMedicationRequest request) {
+        return medicationService.createMedication(request);
     }
 
     @GetMapping("/{id}")

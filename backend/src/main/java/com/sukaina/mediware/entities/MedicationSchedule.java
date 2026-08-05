@@ -1,16 +1,23 @@
-package com.sukaina.mediware;
+package com.sukaina.mediware.entities;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+
 
 @Entity
 public class MedicationSchedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long medicationId;
+
+    @OneToOne
+    @JoinColumn(name = "medication_id", referencedColumnName = "id", nullable = false, unique = true)
+    private Medication medication;
+
     private String frequency_type;
     private String daily_type;
     private String times_per_day;
@@ -21,6 +28,9 @@ public class MedicationSchedule {
     private String as_needed_note;
     private String custom_schedule_note;
 
+    public MedicationSchedule() {
+    }
+
     // Getters and Setters
     public Long getId() {
         return id;
@@ -30,12 +40,12 @@ public class MedicationSchedule {
         this.id = id;
     }
 
-    public Long getMedicationId() {
-        return medicationId;
+    public Medication getMedication() {
+        return medication;
     }
 
-    public void setMedicationId(Long medicationId) {
-        this.medicationId = medicationId;
+    public void setMedication(Medication medication) {
+        this.medication = medication;
     }
 
     public String getFrequency_type() {
@@ -109,5 +119,7 @@ public class MedicationSchedule {
     public void setCustom_schedule_note(String custom_schedule_note) {
         this.custom_schedule_note = custom_schedule_note;
     }
+
+    
 
 }

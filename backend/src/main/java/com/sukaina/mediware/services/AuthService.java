@@ -13,10 +13,12 @@ import com.sukaina.mediware.dto.LoginRequest;
 public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
@@ -27,8 +29,7 @@ public class AuthService {
             throw new RuntimeException("Invalid password");
         }
 
-        // Generate JWT token or any other authentication mechanism
-        String token = generateToken(user);
+        String token = jwtService.generateToken(user);
 
         return new AuthResponse(token, user.getName(), user.getEmail(), user.getId());
     }
@@ -45,7 +46,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String token = generateToken(savedUser);
+        String token = jwtService.generateToken(savedUser);
 
         return new AuthResponse(
                 token,
@@ -54,9 +55,5 @@ public class AuthService {
                 savedUser.getId());
     }
 
-    private String generateToken(User user) {
-        // Implement token generation logic here (e.g., using JWT)
-        return "dummy-token-for-user-" + user.getId();
-    }
 
 }

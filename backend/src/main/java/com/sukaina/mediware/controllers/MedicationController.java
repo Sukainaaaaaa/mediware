@@ -1,11 +1,13 @@
 package com.sukaina.mediware.controllers;
 
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.ResponseEntity;
 import java.util.*;
-import com.sukaina.mediware.entities.Medication;
 import com.sukaina.mediware.services.MedicationService;
-import com.sukaina.mediware.entities.MedicationSchedule;
+import com.sukaina.mediware.entities.User;
 import com.sukaina.mediware.dto.CreateMedicationRequest;
+import com.sukaina.mediware.dto.MedicationResponse;
 
 @RestController
 @RequestMapping("/api/medications")
@@ -18,23 +20,54 @@ public class MedicationController {
     }
 
     @GetMapping("/")
-    public List<Medication> getAllMedications() {
-        return medicationService.getAllMedications();
+    public List<MedicationResponse> getAllMedications(Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return medicationService.getAllMedicationsForUser(user);
     }
 
     @PostMapping("/")
-    public Medication createMedication(@RequestBody CreateMedicationRequest request) {
-        return medicationService.createMedication(request);
+    public MedicationResponse createMedication(@RequestBody CreateMedicationRequest request, Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        return medicationService.createMedication(request, user);
     }
 
     @GetMapping("/{id}")
-    public Medication getMedicationById(@PathVariable Long id) {
-        return medicationService.getMedicationById(id);
+    public ResponseEntity<MedicationResponse> getMedicationById(@PathVariable Long id, Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        MedicationResponse medication = medicationService.getMedicationById(id, user);
+
+        if (medication == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(medication);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MedicationResponse> updateMedication(
+            @PathVariable Long id,
+            @RequestBody CreateMedicationRequest request,
+            Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        MedicationResponse medication = medicationService.updateMedication(id, request, user);
+
+        if (medication == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(medication);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteMedication(@PathVariable Long id) {
-        medicationService.deleteMedication(id);
+    public ResponseEntity<Void> deleteMedication(@PathVariable Long id, Authentication authentication) {
+        User user = (User) authentication.getPrincipal();
+        boolean deleted = medicationService.deleteMedication(id, user);
+
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
 }

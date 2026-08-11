@@ -1,18 +1,26 @@
 package com.sukaina.mediware.dto;
 
-import com.sukaina.mediware.dto.MedicationScheduleRequest;
-
-public class CreateMedicationRequest {
+public class MedicationResponse {
+    private Long id;
     private String name;
     private String form;
     private String strength;
     private String strengthUnit;
     private String indication;
     private String trackingStartDate;
-    
-    private MedicationScheduleRequest schedule;
+    private String createdAt;
+    private String updatedAt;
+    private boolean active;
+    private MedicationScheduleResponse schedule;
 
-    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }
@@ -49,11 +57,9 @@ public class CreateMedicationRequest {
         return indication;
     }
 
-
     public void setIndication(String indication) {
         this.indication = indication;
     }
-
 
     public String getTrackingStartDate() {
         return trackingStartDate;
@@ -63,11 +69,35 @@ public class CreateMedicationRequest {
         this.trackingStartDate = trackingStartDate;
     }
 
-    public MedicationScheduleRequest getSchedule() {
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(String updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public MedicationScheduleResponse getSchedule() {
         return schedule;
     }
 
-    public void setSchedule(MedicationScheduleRequest schedule) {
+    public void setSchedule(MedicationScheduleResponse schedule) {
         this.schedule = schedule;
     }
 }

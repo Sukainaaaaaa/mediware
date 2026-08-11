@@ -6,7 +6,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 
+import com.sukaina.mediware.enums.DailyType;
+import com.sukaina.mediware.enums.FrequencyType;
 
 @Entity
 public class MedicationSchedule {
@@ -18,8 +22,11 @@ public class MedicationSchedule {
     @JoinColumn(name = "medication_id", referencedColumnName = "id", nullable = false, unique = true)
     private Medication medication;
 
-    private String frequency_type;
-    private String daily_type;
+    @Enumerated(EnumType.STRING)
+    private FrequencyType frequency_type;
+
+    @Enumerated(EnumType.STRING)
+    private DailyType daily_type;
     private String times_per_day;
     private String every_x_hours;
     private String week_days;
@@ -48,19 +55,19 @@ public class MedicationSchedule {
         this.medication = medication;
     }
 
-    public String getFrequency_type() {
+    public FrequencyType getFrequency_type() {
         return frequency_type;
     }
 
-    public void setFrequency_type(String frequency_type) {
+    public void setFrequency_type(FrequencyType frequency_type) {
         this.frequency_type = frequency_type;
     }
 
-    public String getDaily_type() {
+    public DailyType getDaily_type() {
         return daily_type;
     }
 
-    public void setDaily_type(String daily_type) {
+    public void setDaily_type(DailyType daily_type) {
         this.daily_type = daily_type;
     }
 

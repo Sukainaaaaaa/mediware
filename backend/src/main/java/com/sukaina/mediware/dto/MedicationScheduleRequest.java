@@ -1,8 +1,17 @@
 package com.sukaina.mediware.dto;
 
+import com.sukaina.mediware.enums.DailyType;
+import com.sukaina.mediware.enums.FrequencyType;
+import com.sukaina.mediware.validation.ValidMedicationSchedule;
+
+import jakarta.validation.constraints.NotNull;
+
+@ValidMedicationSchedule
 public class MedicationScheduleRequest {
-    private String frequencyType;
-    private String dailyType;
+    @NotNull(message = "Medication frequency is required")
+    private FrequencyType frequencyType;
+
+    private DailyType dailyType;
     private String timesPerDay;
     private String everyXHours;
     private String weekDays;
@@ -12,19 +21,19 @@ public class MedicationScheduleRequest {
     private String customScheduleNote;
 
     // Getters and Setters
-    public String getFrequencyType() {
+    public FrequencyType getFrequencyType() {
         return frequencyType;
     }   
 
-    public void setFrequencyType(String frequencyType) {
+    public void setFrequencyType(FrequencyType frequencyType) {
         this.frequencyType = frequencyType;
     }
 
-    public String getDailyType() {
+    public DailyType getDailyType() {
         return dailyType;
     }
 
-    public void setDailyType(String dailyType) {
+    public void setDailyType(DailyType dailyType) {
         this.dailyType = dailyType;
     }
 

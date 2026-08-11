@@ -9,6 +9,7 @@ import com.sukaina.mediware.dto.CreateMedicationRequest;
 import com.sukaina.mediware.dto.MedicationResponse;
 import com.sukaina.mediware.dto.MedicationScheduleResponse;
 import com.sukaina.mediware.entities.User;
+import java.time.LocalDate;
 
 @Service
 public class MedicationService {
@@ -28,6 +29,7 @@ public class MedicationService {
     public MedicationResponse createMedication(CreateMedicationRequest request, User user) {
         Medication medication = new Medication();
         medication.setUser(user);
+        medication.setTracking_start_date(LocalDate.now().toString());
 
         MedicationSchedule medicationSchedule = new MedicationSchedule();
         medication.setMedicationSchedule(medicationSchedule);
@@ -85,7 +87,6 @@ public class MedicationService {
         medication.setStrength(request.getStrength());
         medication.setStrengthUnit(request.getStrengthUnit());
         medication.setIndication(request.getIndication());
-        medication.setTracking_start_date(request.getTrackingStartDate());
 
         if (request.getSchedule() == null) {
             return;

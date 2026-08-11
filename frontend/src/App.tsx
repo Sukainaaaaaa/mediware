@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import BottomNav from "./components/BottomNav";
 import AdherencePage from "./components/AdherencePage";
+import AuthPage from "./components/AuthPage";
 import MedicationsPage from "./components/MedicationsPage";
 import MedicationDetailsOverlay from "./components/MedicationDetailsOverlay";
 import SideEffectsPage from "./components/SideEffectsPage";
@@ -11,14 +12,18 @@ import type { Medication, Page, SideEffectLog } from "./types";
 import { getScheduledDosesWithStatusForDate } from "./utils/medicationSchedule";
 import {
   loadMedications,
+  loadAuthSession,
   loadSideEffectLogs,
   loadTakenDoseIds,
+  clearAuthSession,
+  saveAuthSession,
   saveMedications,
   saveSideEffectLogs,
   saveTakenDoseIds,
 } from "./utils/localStorage";
 
 function App() {
+  const [authSession, setAuthSession] = useState(loadAuthSession);
 
   // State for selected date
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -334,6 +339,17 @@ function App() {
     );
   };
 
+  if (!authSession) {
+    return (
+      <AuthPage
+        onAuthenticated={(newAuthSession) => {
+          saveAuthSession(newAuthSession);
+          setAuthSession(newAuthSession);
+        }}
+      />
+    );
+  }
+
   return (
 
     <main
@@ -438,6 +454,12 @@ function App() {
           resetAddMedicationForm();
           setShowAddForm(true);
         }}
+        onLogout={() => {
+          clearAuthSession();
+          setAuthSession(null);
+        }}
+        userName={authSession.name}
+        userEmail={authSession.email}
       />
 
       {activePage === "tracker" && (

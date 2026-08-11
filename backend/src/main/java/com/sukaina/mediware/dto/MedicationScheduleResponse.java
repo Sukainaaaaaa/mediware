@@ -1,9 +1,12 @@
 package com.sukaina.mediware.dto;
 
+import com.sukaina.mediware.enums.DailyType;
+import com.sukaina.mediware.enums.FrequencyType;
+
 public class MedicationScheduleResponse {
     private Long id;
-    private String frequencyType;
-    private String dailyType;
+    private FrequencyType frequencyType;
+    private DailyType dailyType;
     private String timesPerDay;
     private String everyXHours;
     private String weekDays;
@@ -20,19 +23,19 @@ public class MedicationScheduleResponse {
         this.id = id;
     }
 
-    public String getFrequencyType() {
+    public FrequencyType getFrequencyType() {
         return frequencyType;
     }
 
-    public void setFrequencyType(String frequencyType) {
+    public void setFrequencyType(FrequencyType frequencyType) {
         this.frequencyType = frequencyType;
     }
 
-    public String getDailyType() {
+    public DailyType getDailyType() {
         return dailyType;
     }
 
-    public void setDailyType(String dailyType) {
+    public void setDailyType(DailyType dailyType) {
         this.dailyType = dailyType;
     }
 

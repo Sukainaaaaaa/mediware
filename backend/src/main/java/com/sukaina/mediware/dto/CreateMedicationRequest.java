@@ -1,15 +1,25 @@
 package com.sukaina.mediware.dto;
 
-import com.sukaina.mediware.dto.MedicationScheduleRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public class CreateMedicationRequest {
+
+    @NotBlank(message = "Medication name is required")
     private String name;
+
+    @NotBlank(message = "Medication form is required")
     private String form;
+    @NotBlank(message = "Medication strength is required")
     private String strength;
+    @NotBlank(message = "Medication strength unit is required")
     private String strengthUnit;
+
     private String indication;
-    private String trackingStartDate;
     
+    @Valid
+    @NotNull(message = "Medication schedule is required")
     private MedicationScheduleRequest schedule;
 
     // Getters and Setters
@@ -52,15 +62,6 @@ public class CreateMedicationRequest {
 
     public void setIndication(String indication) {
         this.indication = indication;
-    }
-
-
-    public String getTrackingStartDate() {
-        return trackingStartDate;
-    }
-
-    public void setTrackingStartDate(String trackingStartDate) {
-        this.trackingStartDate = trackingStartDate;
     }
 
     public MedicationScheduleRequest getSchedule() {

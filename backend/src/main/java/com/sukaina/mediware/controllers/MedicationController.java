@@ -8,6 +8,7 @@ import com.sukaina.mediware.services.MedicationService;
 import com.sukaina.mediware.entities.User;
 import com.sukaina.mediware.dto.CreateMedicationRequest;
 import com.sukaina.mediware.dto.MedicationResponse;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/medications")
@@ -26,7 +27,7 @@ public class MedicationController {
     }
 
     @PostMapping("/")
-    public MedicationResponse createMedication(@RequestBody CreateMedicationRequest request, Authentication authentication) {
+    public MedicationResponse createMedication(@Valid @RequestBody CreateMedicationRequest request, Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         return medicationService.createMedication(request, user);
     }
@@ -46,7 +47,7 @@ public class MedicationController {
     @PutMapping("/{id}")
     public ResponseEntity<MedicationResponse> updateMedication(
             @PathVariable Long id,
-            @RequestBody CreateMedicationRequest request,
+            @Valid @RequestBody CreateMedicationRequest request,
             Authentication authentication) {
         User user = (User) authentication.getPrincipal();
         MedicationResponse medication = medicationService.updateMedication(id, request, user);

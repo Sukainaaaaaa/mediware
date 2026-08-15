@@ -84,10 +84,11 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
         color: "white",
         display: "flex",
         flexDirection: "column",
-        padding: "28px 24px",
+        padding: "clamp(18px, 6vw, 28px) clamp(16px, 6vw, 24px)",
         boxSizing: "border-box",
         position: "relative",
-        overflow: "hidden",
+        overflowX: "hidden",
+        overflowY: "auto",
       }}
     >
       <div
@@ -116,12 +117,12 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
           style={{
             margin: 0,
             textAlign: "center",
-            fontSize: "38px",
+            fontSize: "clamp(30px, 10vw, 38px)",
             fontWeight: 800,
             letterSpacing: 0,
           }}
         >
-          Mediware
+          mediware
         </p>
 
         <section
@@ -129,23 +130,24 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "flex-end",
-            paddingBottom: "18px",
+            justifyContent: "space-between",
+            paddingBottom: "max(18px, env(safe-area-inset-bottom))",
+            paddingTop: "clamp(28px, 8vh, 72px)",
+            gap: "clamp(24px, 6vh, 44px)",
           }}
         >
           <div
             style={{
-              minHeight: mode ? "auto" : "58vh",
               display: "flex",
               flexDirection: "column",
-              justifyContent: "flex-end",
-              gap: "18px",
+              justifyContent: "flex-start",
+              gap: "clamp(12px, 3.5vh, 18px)",
             }}
           >
             <div
               style={{
-                width: "74px",
-                height: "74px",
+                width: "clamp(58px, 18vw, 74px)",
+                height: "clamp(58px, 18vw, 74px)",
                 border: "2px solid rgba(255,255,255,0.72)",
                 borderRadius: "999px",
                 display: "flex",
@@ -157,8 +159,8 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
               <span
                 aria-hidden="true"
                 style={{
-                  width: "30px",
-                  height: "42px",
+                  width: "clamp(24px, 8vw, 30px)",
+                  height: "clamp(34px, 11vw, 42px)",
                   border: "3px solid white",
                   borderRadius: "999px",
                   transform: "rotate(32deg)",
@@ -170,7 +172,7 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
             <h1
               style={{
                 margin: 0,
-                fontSize: "clamp(42px, 12vw, 62px)",
+                fontSize: "clamp(34px, 11vw, 58px)",
                 lineHeight: 1,
                 fontWeight: 900,
                 letterSpacing: 0,
@@ -181,11 +183,12 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
 
             <p
               style={{
-                margin: 0,
-                fontSize: "20px",
+                margin: "clamp(14px, 4vh, 28px) 0 0",
+                fontSize: "clamp(16px, 4.5vw, 20px)",
                 lineHeight: 1.35,
                 fontWeight: 600,
                 opacity: 0.9,
+                maxWidth: "380px",
               }}
             >
               Track what you take, what you have taken, and what needs your
@@ -194,7 +197,13 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
           </div>
 
           {!mode && (
-            <div style={{ display: "grid", gap: "14px", marginTop: "38px" }}>
+            <div
+              style={{
+                display: "grid",
+                gap: "14px",
+                marginTop: 0,
+              }}
+            >
               <button
                 onClick={() => setMode("register")}
                 style={primaryButtonStyle}
@@ -213,7 +222,7 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
           {mode && (
             <div
               style={{
-                marginTop: "28px",
+                marginTop: 0,
                 display: "grid",
                 gap: "12px",
               }}
@@ -241,7 +250,13 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
               </div>
 
               {isRegistering && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                    gap: "10px",
+                  }}
+                >
                   <input
                     value={firstName}
                     onChange={(event) => setFirstName(event.target.value)}
@@ -329,12 +344,12 @@ function AuthPage({ onAuthenticated }: AuthPageProps) {
 
 const primaryButtonStyle = {
   width: "100%",
-  minHeight: "62px",
+  minHeight: "clamp(54px, 13vw, 62px)",
   borderRadius: "8px",
   border: "2px solid white",
   backgroundColor: "white",
   color: "#1a5334",
-  fontSize: "17px",
+  fontSize: "clamp(15px, 4vw, 17px)",
   fontWeight: 900,
   letterSpacing: "2px",
   cursor: "pointer",
@@ -348,13 +363,13 @@ const secondaryButtonStyle = {
 
 const inputStyle = {
   width: "100%",
-  minHeight: "54px",
+  minHeight: "clamp(50px, 12vw, 54px)",
   padding: "0 14px",
   borderRadius: "8px",
   border: "2px solid white",
   backgroundColor: "rgba(26, 83, 52, 0.72)",
   color: "white",
-  fontSize: "16px",
+  fontSize: "clamp(15px, 4vw, 16px)",
   fontWeight: 700,
   boxSizing: "border-box",
   outline: "none",
@@ -363,12 +378,12 @@ const inputStyle = {
 const getModeButtonStyle = (isActive: boolean) =>
   ({
     flex: 1,
-    minHeight: "44px",
+    minHeight: "clamp(42px, 11vw, 44px)",
     border: "none",
     borderRadius: "999px",
     backgroundColor: isActive ? "white" : "transparent",
     color: isActive ? "#1a5334" : "white",
-    fontSize: "15px",
+    fontSize: "clamp(14px, 3.8vw, 15px)",
     fontWeight: 900,
     cursor: "pointer",
   }) as const;

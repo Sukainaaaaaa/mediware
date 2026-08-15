@@ -8,6 +8,15 @@ import MedicationDetailsOverlay from "./components/MedicationDetailsOverlay";
 import SideEffectsPage from "./components/SideEffectsPage";
 import TrackerPage from "./components/TrackerPage";
 import MedicationWizard from "./components/MedicationWizard";
+import { ApiError } from "./api/client";
+import {
+  createMedication,
+  deleteMedication,
+  getMedications,
+  mapMedicationToCreateRequest,
+  mapMedicationResponseToMedication,
+  updateMedication,
+} from "./api/medications";
 import type { Medication, Page, SideEffectLog } from "./types";
 import { getScheduledDosesWithStatusForDate } from "./utils/medicationSchedule";
 import {
@@ -116,6 +125,8 @@ function App() {
   const [otherSchedule, setOtherSchedule] = useState("");
   const [indication, setIndication] = useState("");
   const [medications, setMedications] = useState<Medication[]>(loadMedications);
+  const [medicationsLoadError, setMedicationsLoadError] = useState("");
+  const [medicationSaveError, setMedicationSaveError] = useState("");
   const [takenDoseIds, setTakenDoseIds] = useState<string[]>(loadTakenDoseIds);
   const [sideEffectLogs, setSideEffectLogs] =
     useState<SideEffectLog[]>(loadSideEffectLogs);
@@ -133,6 +144,44 @@ function App() {
   useEffect(() => {
     saveMedications(medications);
   }, [medications]);
+
+  useEffect(() => {
+    if (!authSession) {
+      return;
+    }
+
+    let shouldUseResponse = true;
+
+    setMedicationsLoadError("");
+
+    getMedications()
+      .then((backendMedications) => {
+        if (!shouldUseResponse) {
+          return;
+        }
+
+        setMedications(
+          backendMedications.map(mapMedicationResponseToMedication)
+        );
+      })
+      .catch((error) => {
+        if (!shouldUseResponse) {
+          return;
+        }
+
+        if (error instanceof ApiError && error.status === 401) {
+          clearAuthSession();
+          setAuthSession(null);
+          return;
+        }
+
+        setMedicationsLoadError("Could not load medications from the backend.");
+      });
+
+    return () => {
+      shouldUseResponse = false;
+    };
+  }, [authSession]);
 
   useEffect(() => {
     saveTakenDoseIds(takenDoseIds);
@@ -230,7 +279,7 @@ function App() {
     return "Not selected";
   };
 
-  const handleSaveMedication = () => {
+  const handleSaveMedication = async () => {
     const medicationId = editingMedicationId ?? Date.now();
     const existingMedication = medications.find(
       (medication) => medication.id === editingMedicationId
@@ -255,16 +304,43 @@ function App() {
       indication,
     };
 
+    setMedicationSaveError("");
+
     if (editingMedicationId === null) {
-      setMedications([...medications, medicationToSave]);
+      try {
+        const savedMedication = await createMedication(
+          mapMedicationToCreateRequest(medicationToSave)
+        );
+
+        setMedications((currentMedications) => [
+          ...currentMedications,
+          mapMedicationResponseToMedication(savedMedication),
+        ]);
+      } catch {
+        setMedicationSaveError("Could not save medication to the backend.");
+        return;
+      }
     } else {
       const medicationDoseIdPrefix = `${editingMedicationId}-`;
 
-      setMedications((currentMedications) =>
-        currentMedications.map((medication) =>
-          medication.id === editingMedicationId ? medicationToSave : medication
-        )
-      );
+      try {
+        const savedMedication = await updateMedication(
+          editingMedicationId,
+          mapMedicationToCreateRequest(medicationToSave)
+        );
+
+        setMedications((currentMedications) =>
+          currentMedications.map((medication) =>
+            medication.id === editingMedicationId
+              ? mapMedicationResponseToMedication(savedMedication)
+              : medication
+          )
+        );
+      } catch {
+        setMedicationSaveError("Could not update medication in the backend.");
+        return;
+      }
+
       setTakenDoseIds((currentIds) =>
         currentIds.filter((doseId) => !doseId.startsWith(medicationDoseIdPrefix))
       );
@@ -302,12 +378,19 @@ function App() {
     );
   };
 
-  const deleteSelectedMedication = () => {
+  const deleteSelectedMedication = async () => {
     if (selectedMedicationId === null) {
       return;
     }
 
     const medicationDoseIdPrefix = `${selectedMedicationId}-`;
+
+    try {
+      await deleteMedication(selectedMedicationId);
+    } catch {
+      setMedicationsLoadError("Could not delete medication from the backend.");
+      return;
+    }
 
     setMedications((currentMedications) =>
       currentMedications.filter((medication) => medication.id !== selectedMedicationId)
@@ -462,6 +545,24 @@ function App() {
         userEmail={authSession.email}
       />
 
+      {medicationsLoadError && (
+        <div
+          style={{
+            margin: "16px auto 0",
+            width: "min(560px, calc(100% - 32px))",
+            border: "1px solid rgba(26, 83, 52, 0.22)",
+            borderRadius: "14px",
+            backgroundColor: "white",
+            color: "#1a5334",
+            padding: "12px 14px",
+            fontSize: "13px",
+            fontWeight: 700,
+          }}
+        >
+          {medicationsLoadError}
+        </div>
+      )}
+
       {activePage === "tracker" && (
         <TrackerPage
           dateLabel={getDateLabel(selectedDate)}
@@ -546,8 +647,10 @@ function App() {
         indication={indication}
         weekDays={weekDays}
         scheduleSummary={getScheduleSummary()}
+        saveError={medicationSaveError}
         onClose={() => {
           setShowAddForm(false);
+          setMedicationSaveError("");
           resetAddMedicationForm();
         }}
         onSave={handleSaveMedication}

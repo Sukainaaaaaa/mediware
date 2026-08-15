@@ -21,6 +21,7 @@ type MedicationWizardProps = {
   indication: string;
   weekDays: string[];
   scheduleSummary: string;
+  saveError: string;
   onClose: () => void;
   onSave: () => void;
   setStep: (step: number) => void;
@@ -225,6 +226,7 @@ function MedicationWizard({
   indication,
   weekDays,
   scheduleSummary,
+  saveError,
   onClose,
   onSave,
   setStep,
@@ -1004,6 +1006,19 @@ function MedicationWizard({
                   {editingMedicationId === null ? "Save" : "Save changes"}
                 </button>
               </div>
+              {saveError && (
+                <p
+                  style={{
+                    margin: "16px 0 0",
+                    color: "white",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                    textAlign: "center",
+                  }}
+                >
+                  {saveError}
+                </p>
+              )}
             </div>
           </div>
         </div>

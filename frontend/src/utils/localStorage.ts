@@ -12,7 +12,7 @@ export {
   saveSideEffectLogs,
 };
 
-type AuthSession = {
+export type AuthSession = {
   token: string;
   name: string;
   email: string;

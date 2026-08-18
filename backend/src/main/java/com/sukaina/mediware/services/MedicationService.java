@@ -10,6 +10,7 @@ import com.sukaina.mediware.dto.MedicationResponse;
 import com.sukaina.mediware.dto.MedicationScheduleResponse;
 import com.sukaina.mediware.entities.User;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Service
 public class MedicationService {
@@ -20,7 +21,7 @@ public class MedicationService {
     }
 
     public List<MedicationResponse> getAllMedicationsForUser(User user) {
-        return medicationRepository.findByUser(user)
+        return medicationRepository.findByUserAndIsActiveTrue(user)
                 .stream()
                 .map(this::toMedicationResponse)
                 .toList();
@@ -54,6 +55,7 @@ public class MedicationService {
         }
 
         applyMedicationRequest(medication, request);
+        medication.setUpdatedAt(LocalDateTime.now());
 
         return toMedicationResponse(medicationRepository.save(medication));
     }
@@ -72,7 +74,9 @@ public class MedicationService {
         Medication medication = medicationRepository.findByIdAndUser(id, user).orElse(null);
 
         if (medication != null) {
-            medicationRepository.delete(medication);
+            medication.setActive(false);
+            medication.setUpdatedAt(LocalDateTime.now());
+            medicationRepository.save(medication);
             return true;
         }
 
@@ -113,8 +117,10 @@ public class MedicationService {
         response.setStrengthUnit(medication.getStrengthUnit());
         response.setIndication(medication.getIndication());
         response.setTrackingStartDate(medication.getTracking_start_date());
-        response.setCreatedAt(medication.getCreated_at());
-        response.setUpdatedAt(medication.getUpdated_at());
+        response.setCreatedAt(
+                medication.getCreatedAt() == null ? null : medication.getCreatedAt().toString());
+        response.setUpdatedAt(
+                medication.getUpdatedAt() == null ? null : medication.getUpdatedAt().toString());
         response.setActive(medication.isActive());
         response.setSchedule(toMedicationScheduleResponse(medication.getMedicationSchedule()));
 

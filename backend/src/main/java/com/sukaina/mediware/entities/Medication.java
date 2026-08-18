@@ -1,11 +1,15 @@
 package com.sukaina.mediware.entities;
 
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.ManyToOne;
@@ -27,15 +31,28 @@ public class Medication {
     private String strengthUnit;
     private String indication;
     private String tracking_start_date;
-    private String created_at;
-    private String updated_at;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private boolean isActive;
     @OneToOne(mappedBy = "medication", cascade = CascadeType.ALL, orphanRemoval = true)
     private MedicationSchedule medicationSchedule;
 
     public Medication() {
     
-    }   
+    }
+
+    @PrePersist
+    public void onCreate() {
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now;
+        isActive = true;
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     // Getters and Setters
     public Long getId() {
@@ -102,20 +119,20 @@ public class Medication {
         this.tracking_start_date = tracking_start_date;
     }
 
-    public String getCreated_at() {
-        return created_at;
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
-    public void setCreated_at(String created_at) {
-        this.created_at = created_at;
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 
-    public String getUpdated_at() {
-        return updated_at;
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
-    public void setUpdated_at(String updated_at) {
-        this.updated_at = updated_at;
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public boolean isActive() {

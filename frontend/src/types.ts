@@ -33,6 +33,8 @@ type ScheduledDose = {
   id: string;
   medication: Medication;
   doseLabel: string;
+  doseDate: string;
+  doseIndex: number;
 };
 
 type DoseStatus = "taken" | "missed" | "pending";

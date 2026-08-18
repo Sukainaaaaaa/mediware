@@ -13,6 +13,8 @@ public interface DoseLogRepository extends JpaRepository<DoseLog, Long> {
 
     List<DoseLog> findByMedication(Medication medication);
 
+    List<DoseLog> findByMedicationAndUser(Medication medication, User user);
+
     List<DoseLog> findByUserAndDoseDate(User user, LocalDate doseDate);
 
     List<DoseLog> findByMedicationAndDoseDate(Medication medication, LocalDate doseDate);

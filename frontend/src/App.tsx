@@ -17,7 +17,18 @@ import {
   mapMedicationResponseToMedication,
   updateMedication,
 } from "./api/medications";
-import type { Medication, Page, SideEffectLog } from "./types";
+import {
+  deleteDoseLog,
+  getDoseLogs,
+  logDoseTaken,
+  mapDoseLogResponseToDoseId,
+} from "./api/doseLogs";
+import type {
+  Medication,
+  Page,
+  ScheduledDoseWithStatus,
+  SideEffectLog,
+} from "./types";
 import { getScheduledDosesWithStatusForDate } from "./utils/medicationSchedule";
 import {
   loadMedications,
@@ -176,6 +187,32 @@ function App() {
         }
 
         setMedicationsLoadError("Could not load medications from the backend.");
+      });
+
+    getDoseLogs()
+      .then((backendDoseLogs) => {
+        if (!shouldUseResponse) {
+          return;
+        }
+
+        setTakenDoseIds(
+          backendDoseLogs
+            .filter((doseLog) => doseLog.status === "TAKEN")
+            .map(mapDoseLogResponseToDoseId)
+        );
+      })
+      .catch((error) => {
+        if (!shouldUseResponse) {
+          return;
+        }
+
+        if (error instanceof ApiError && error.status === 401) {
+          clearAuthSession();
+          setAuthSession(null);
+          return;
+        }
+
+        setMedicationsLoadError("Could not load dose history from the backend.");
       });
 
     return () => {
@@ -361,20 +398,49 @@ function App() {
     takenDoseIds
   );
 
-  const markDoseAsTaken = (doseId: string) => {
-    setCompletingDoseIds((currentIds) => [...currentIds, doseId]);
+  const markDoseAsTaken = async (dose: ScheduledDoseWithStatus) => {
+    setCompletingDoseIds((currentIds) =>
+      currentIds.includes(dose.id) ? currentIds : [...currentIds, dose.id]
+    );
+
+    try {
+      await logDoseTaken({
+        medicationId: dose.medication.id,
+        doseDate: dose.doseDate,
+        doseIndex: dose.doseIndex,
+      });
+    } catch {
+      setCompletingDoseIds((currentIds) =>
+        currentIds.filter((currentId) => currentId !== dose.id)
+      );
+      setMedicationsLoadError("Could not save dose as taken to the backend.");
+      return;
+    }
 
     window.setTimeout(() => {
       setCompletingDoseIds((currentIds) =>
-        currentIds.filter((currentId) => currentId !== doseId)
+        currentIds.filter((currentId) => currentId !== dose.id)
       );
-      setTakenDoseIds((currentIds) => [...currentIds, doseId]);
+      setTakenDoseIds((currentIds) =>
+        currentIds.includes(dose.id) ? currentIds : [...currentIds, dose.id]
+      );
     }, 650);
   };
 
-  const undoTakenDose = (doseId: string) => {
+  const undoTakenDose = async (dose: ScheduledDoseWithStatus) => {
+    try {
+      await deleteDoseLog({
+        medicationId: dose.medication.id,
+        doseDate: dose.doseDate,
+        doseIndex: dose.doseIndex,
+      });
+    } catch {
+      setMedicationsLoadError("Could not move dose back to medication to take.");
+      return;
+    }
+
     setTakenDoseIds((currentIds) =>
-      currentIds.filter((currentId) => currentId !== doseId)
+      currentIds.filter((currentId) => currentId !== dose.id)
     );
   };
 

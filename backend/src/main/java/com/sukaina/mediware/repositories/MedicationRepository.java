@@ -9,6 +9,7 @@ import com.sukaina.mediware.entities.User;
 public interface MedicationRepository extends JpaRepository<Medication, Long> {
 
     List<Medication> findByUser(User user);
+    List<Medication> findByUserAndIsActiveTrue(User user);
     Optional<Medication> findByIdAndUser(Long id, User user);
 
 }

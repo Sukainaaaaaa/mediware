@@ -146,6 +146,8 @@ const getDateKey = (date: Date) => {
       return Array.from({ length: doseCount }, (_, index) => ({
         id: `${medication.id}-${dateKey}-${index + 1}`,
         medication,
+        doseDate: dateKey,
+        doseIndex: index + 1,
         doseLabel:
           doseCount > 1 ? `Dose ${index + 1} of ${doseCount}` : "Dose 1 of 1",
       }));

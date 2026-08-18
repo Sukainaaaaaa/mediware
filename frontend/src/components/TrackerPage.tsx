@@ -10,8 +10,8 @@ type TrackerPageProps = {
   completingDoseIds: string[];
   onPreviousDay: () => void;
   onNextDay: () => void;
-  onMarkDoseAsTaken: (doseId: string) => void;
-  onUndoTakenDose: (doseId: string) => void;
+  onMarkDoseAsTaken: (dose: ScheduledDoseWithStatus) => void;
+  onUndoTakenDose: (dose: ScheduledDoseWithStatus) => void;
 };
 
 type MedicationDoseGroup = {
@@ -441,7 +441,7 @@ function TrackerPage({
                     {isTaken ? (
                       <IconButton
                         ariaLabel={`Move ${dose.doseLabel} back to medication to take`}
-                        onClick={() => onUndoTakenDose(dose.id)}
+                        onClick={() => onUndoTakenDose(dose)}
                         size={38}
                         border="1px solid white"
                       >
@@ -450,7 +450,7 @@ function TrackerPage({
                     ) : (
                       <IconButton
                         ariaLabel={`Mark ${dose.doseLabel} as taken`}
-                        onClick={() => onMarkDoseAsTaken(dose.id)}
+                        onClick={() => onMarkDoseAsTaken(dose)}
                         disabled={isFutureDate}
                         size={42}
                         border="2px solid #1a5334"

@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface DoseLogRepository extends JpaRepository<DoseLog, Long> {
     List<DoseLog> findByUser(User user);
 
+    void deleteByUser(User user);
+
     List<DoseLog> findByMedication(Medication medication);
 
     List<DoseLog> findByMedicationAndUser(Medication medication, User user);

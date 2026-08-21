@@ -30,6 +30,10 @@ public class DoseLog {
     private LocalDate doseDate;
     private LocalDateTime markedAt;
     private Integer doseIndex;
+    private String medicationName;
+    private String strength;
+    private String strengthUnit;
+    private String doseLabel;
 
     @Enumerated(EnumType.STRING)
     private DoseStatus status;
@@ -84,6 +88,38 @@ public class DoseLog {
 
     public void setDoseIndex(Integer doseIndex) {
         this.doseIndex = doseIndex;
+    }
+
+    public String getMedicationName() {
+        return medicationName;
+    }
+
+    public void setMedicationName(String medicationName) {
+        this.medicationName = medicationName;
+    }
+
+    public String getStrength() {
+        return strength;
+    }
+
+    public void setStrength(String strength) {
+        this.strength = strength;
+    }
+
+    public String getStrengthUnit() {
+        return strengthUnit;
+    }
+
+    public void setStrengthUnit(String strengthUnit) {
+        this.strengthUnit = strengthUnit;
+    }
+
+    public String getDoseLabel() {
+        return doseLabel;
+    }
+
+    public void setDoseLabel(String doseLabel) {
+        this.doseLabel = doseLabel;
     }
 
     public DoseStatus getStatus() {

@@ -48,6 +48,10 @@ public class DoseLogService {
         doseLog.setDoseDate(request.getDoseDate());
         doseLog.setDoseIndex(request.getDoseIndex());
         doseLog.setMarkedAt(LocalDateTime.now());
+        doseLog.setMedicationName(medication.getName());
+        doseLog.setStrength(medication.getStrength());
+        doseLog.setStrengthUnit(medication.getStrengthUnit());
+        doseLog.setDoseLabel("Dose " + request.getDoseIndex());
         doseLog.setStatus(DoseStatus.TAKEN);
 
         return toDoseLogResponse(doseLogRepository.save(doseLog));
@@ -93,6 +97,10 @@ public class DoseLogService {
         response.setDoseDate(doseLog.getDoseDate());
         response.setDoseIndex(doseLog.getDoseIndex());
         response.setMarkedAt(doseLog.getMarkedAt());
+        response.setMedicationName(doseLog.getMedicationName());
+        response.setStrength(doseLog.getStrength());
+        response.setStrengthUnit(doseLog.getStrengthUnit());
+        response.setDoseLabel(doseLog.getDoseLabel());
         response.setStatus(doseLog.getStatus());
 
         return response;

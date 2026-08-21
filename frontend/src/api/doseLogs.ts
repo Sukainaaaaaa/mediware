@@ -12,6 +12,10 @@ export type DoseLogResponse = {
   doseDate: string;
   doseIndex: number;
   markedAt: string;
+  medicationName: string;
+  strength: string;
+  strengthUnit: string;
+  doseLabel: string;
   status: "PENDING" | "TAKEN" | "MISSED";
 };
 
